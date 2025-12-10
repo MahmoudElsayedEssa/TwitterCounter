@@ -64,7 +64,7 @@ fun StatCard(
             ) {
                 AnimatedNumber(
                     value = value,
-                    style = TextStyle(
+                    style = androidx.compose.ui.text.TextStyle(
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF111827)
