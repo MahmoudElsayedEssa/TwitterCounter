@@ -18,8 +18,8 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -32,10 +32,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.moe.twitter.presentation.twitter.TwitterState
+import com.moe.twitter.presentation.twitter.components.morph.MorphConfig
+import com.moe.twitter.presentation.twitter.components.morph.TextTransition
 import kotlinx.coroutines.delay
 
 private enum class PostButtonState { Idle, Invalid, Loading, Success, Error }
@@ -84,6 +85,15 @@ fun PostTweetButton(
             delay(1500)
             buttonState = PostButtonState.Idle
         }
+    }
+
+    // Get current button text based on state
+    val buttonText = when (buttonState) {
+        PostButtonState.Idle -> "Post tweet"
+        PostButtonState.Invalid -> if (state.text.isBlank()) "Enter some text" else "Text too long"
+        PostButtonState.Loading -> "Posting..."
+        PostButtonState.Success -> "Posted!"
+        PostButtonState.Error -> "Failed"
     }
 
     val scale by animateFloatAsState(
@@ -154,11 +164,17 @@ fun PostTweetButton(
                             strokeWidth = 2.5.dp,
                             modifier = Modifier.size(20.dp)
                         )
-                        Text(
-                            text = "Posting...",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            textAlign = TextAlign.Center
+                        TextTransition(
+                            targetText = buttonText,
+                            textStyle = MaterialTheme.typography.bodyLarge.copy(
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.SemiBold
+                            ),
+                            color = contentColor,
+                            config = MorphConfig(
+                                duration = 350,
+                                staggerDelay = 20
+                            )
                         )
                     }
                 }
@@ -173,10 +189,17 @@ fun PostTweetButton(
                             tint = contentColor,
                             modifier = Modifier.size(22.dp)
                         )
-                        Text(
-                            text = "Posted!",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold
+                        TextTransition(
+                            targetText = buttonText,
+                            textStyle = MaterialTheme.typography.bodyLarge.copy(
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.SemiBold
+                            ),
+                            color = contentColor,
+                            config = MorphConfig(
+                                duration = 350,
+                                staggerDelay = 20
+                            )
                         )
                     }
                 }
@@ -191,25 +214,32 @@ fun PostTweetButton(
                             tint = contentColor,
                             modifier = Modifier.size(22.dp)
                         )
-                        Text(
-                            text = "Failed",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold
+                        TextTransition(
+                            targetText = buttonText,
+                            textStyle = MaterialTheme.typography.bodyLarge.copy(
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.SemiBold
+                            ),
+                            color = contentColor,
+                            config = MorphConfig(
+                                duration = 350,
+                                staggerDelay = 20
+                            )
                         )
                     }
                 }
-                PostButtonState.Invalid -> {
-                    Text(
-                        text = if (state.text.isBlank()) "Enter some text" else "Text too long",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-                PostButtonState.Idle -> {
-                    Text(
-                        text = "Post tweet",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold
+                PostButtonState.Invalid, PostButtonState.Idle -> {
+                    TextTransition(
+                        targetText = buttonText,
+                        textStyle = MaterialTheme.typography.bodyLarge.copy(
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold
+                        ),
+                        color = contentColor,
+                        config = MorphConfig(
+                            duration = 350,
+                            staggerDelay = 20
+                        )
                     )
                 }
             }
