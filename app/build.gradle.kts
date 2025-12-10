@@ -18,6 +18,17 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField(
+            "String",
+            "TWITTER_BASE_URL",
+            "\"https://api.your-backend.com/\""
+        )
+        buildConfigField(
+            "String",
+            "LANGUAGE_TOOL_BASE_URL",
+            "\"https://api.languagetool.org/v2/\""
+        )
     }
 
     buildTypes {
@@ -38,6 +49,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -69,8 +81,8 @@ dependencies {
     implementation("com.twitter.twittertext:twitter-text:3.1.0")
 
     // Retrofit
-    implementation("com.squareup.retrofit2:retrofit:3.0.0")
-    implementation("com.squareup.retrofit2:converter-gson:3.0.0")
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
 
 }
