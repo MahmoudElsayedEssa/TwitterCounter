@@ -26,6 +26,7 @@ fun TwitterRoute() {
 
     TwitterScreen(
         state = state,
+        ghostEvents = viewModel.ghostEvents,
         onAction = viewModel::onAction
     )
 }

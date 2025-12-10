@@ -1,6 +1,7 @@
 package com.moe.twitter.presentation.twitter
 
 import androidx.compose.runtime.Immutable
+import androidx.compose.ui.text.TextLayoutResult
 import com.moe.twitter.domain.model.TextIssue
 import com.moe.twitter.domain.model.TweetMetrics
 
@@ -14,7 +15,6 @@ data class TwitterState(
         withinLimit = true
     ),
     val errors: List<TextIssue> = emptyList(),
-    val ghosts: List<GhostCharUi> = emptyList(),
     val isChecking: Boolean = false,
     val isPosting: Boolean = false,
     val clearSignal: Int = 0
@@ -25,6 +25,21 @@ interface TwitterAction {
     data object OnClear : TwitterAction
     data object OnCopy : TwitterAction
     data object OnPost : TwitterAction
+    data class OnTextLayout(val layout: TextLayoutResult) : TwitterAction
+}
+
+@Immutable
+data class GhostSeed(
+    val id: Long,
+    val char: Char,
+    val baseX: Float,
+    val baseY: Float,
+    val order: Int = 0
+)
+
+sealed interface GhostEvent {
+    data class Backspace(val seed: GhostSeed, val delayMs: Long) : GhostEvent
+    data class Clear(val seeds: List<GhostSeed>, val smartDelayMs: Long) : GhostEvent
 }
 
 sealed interface TwitterEffect {

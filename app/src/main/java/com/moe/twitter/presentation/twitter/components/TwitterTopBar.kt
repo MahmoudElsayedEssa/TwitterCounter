@@ -42,7 +42,7 @@ fun TwitterTopBar(
             }
         },
         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-            containerColor = Color.Transparent,
+            containerColor = Color.White,
             titleContentColor = MaterialTheme.colorScheme.onBackground
         )
     )

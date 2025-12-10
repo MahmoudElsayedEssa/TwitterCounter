@@ -30,14 +30,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.moe.twitter.R
+import com.moe.twitter.presentation.twitter.GhostEvent
 import com.moe.twitter.presentation.twitter.components.DissolveTextArea
 import com.moe.twitter.presentation.twitter.components.StatCard
 import com.moe.twitter.presentation.twitter.components.TwitterTopBar
+import kotlinx.coroutines.flow.Flow
 
 @Composable
 fun TwitterScreen(
     state: TwitterState,
-    onAction:  (TwitterAction) -> Unit,
+    ghostEvents: kotlinx.coroutines.flow.Flow<GhostEvent>,
+    onAction: (TwitterAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -45,7 +48,7 @@ fun TwitterScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = Color(0xFFF4F7FB),
+        containerColor = Color.White,
         topBar = {
             TwitterTopBar(
                 title = "Twitter character count",
@@ -58,7 +61,7 @@ fun TwitterScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 20.dp)
+                .padding(horizontal = 20.dp, vertical = 12.dp)
         ) {
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -66,7 +69,7 @@ fun TwitterScreen(
                 painter = painterResource(id = R.drawable.ic_twitter_logo),
                 contentDescription = "Twitter logo",
                 modifier = Modifier
-                    .size(64.dp)
+                    .size(56.dp)
                     .align(Alignment.CenterHorizontally)
             )
 
@@ -88,11 +91,13 @@ fun TwitterScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(18.dp))
 
             DissolveTextArea(
                 state = state,
-                onTextChange = { onActionState(TwitterAction.OnTextChange(it)) }
+                onTextChange = { onActionState(TwitterAction.OnTextChange(it)) },
+                onTextLayout = { onActionState(TwitterAction.OnTextLayout(it)) },
+                ghostEvents = ghostEvents
             )
 
             Spacer(modifier = Modifier.height(14.dp))
@@ -108,7 +113,7 @@ fun TwitterScreen(
                         containerColor = Color(0xFF27AE60),
                         contentColor = Color.White
                     ),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(10.dp)
                 ) {
                     Text(
                         text = "Copy Text",
@@ -124,7 +129,7 @@ fun TwitterScreen(
                         containerColor = Color(0xFFE63946),
                         contentColor = Color.White
                     ),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(10.dp)
                 ) {
                     Text(
                         text = "Clear Text",
@@ -145,7 +150,7 @@ fun TwitterScreen(
                     containerColor = Color(0xFF1DA1F2),
                     contentColor = Color.White
                 ),
-                shape = RoundedCornerShape(14.dp),
+                shape = RoundedCornerShape(12.dp),
                 enabled = state.text.isNotEmpty() &&
                         state.metrics.withinLimit &&
                         !state.isPosting

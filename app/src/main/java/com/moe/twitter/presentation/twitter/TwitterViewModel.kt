@@ -15,6 +15,11 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.text.TextLayoutResult
+import com.moe.twitter.presentation.twitter.TwitterAction
+import com.moe.twitter.presentation.twitter.GhostEvent
+import com.moe.twitter.presentation.twitter.GhostSeed
 
 class TwitterViewModel(
     private val postTweetUseCase: PostTweetUseCase,
@@ -28,7 +33,12 @@ class TwitterViewModel(
     private val _effects = Channel<TwitterEffect>(Channel.BUFFERED)
     val effects = _effects.receiveAsFlow()
 
+    private val _ghostEvents = Channel<GhostEvent>(Channel.BUFFERED)
+    val ghostEvents = _ghostEvents.receiveAsFlow()
+
     private var checkJob: Job? = null
+    private var lastLayout: TextLayoutResult? = null
+    private var previousText: String = ""
 
     fun onAction(action: TwitterAction) {
         when (action) {
@@ -36,6 +46,7 @@ class TwitterViewModel(
             is TwitterAction.OnClear -> handleClear()
             is TwitterAction.OnCopy -> handleCopy()
             is TwitterAction.OnPost -> handlePost()
+            is TwitterAction.OnTextLayout -> lastLayout = action.layout
         }
     }
 
@@ -49,22 +60,41 @@ class TwitterViewModel(
                 )
             }
             launchDebouncedCheck(newValue)
+
+            val layout = lastLayout
+            if (layout != null) {
+                handleDeletions(
+                    oldText = previousText,
+                    newText = newValue,
+                    layout = layout
+                )
+            }
+            previousText = newValue
         }
     }
 
     private fun handleClear() {
         viewModelScope.launch {
+            val layout = lastLayout
+            val text = _state.value.text
+            if (layout != null && text.isNotEmpty()) {
+                spawnClearAllGhosts(
+                    text = text,
+                    layout = layout
+                )
+            }
+
             _state.update {
                 it.copy(
                     text = "",
                     metrics = computeTweetMetricsUseCase(""),
                     errors = emptyList(),
-                    ghosts = emptyList(),
                     isChecking = false,
                     clearSignal = it.clearSignal + 1
                 )
             }
             checkJob?.cancel()
+            previousText = ""
         }
     }
 
@@ -112,6 +142,82 @@ class TwitterViewModel(
                 emptyList()
             }
             _state.update { it.copy(errors = result, isChecking = false) }
+        }
+    }
+
+    // ---------------- Ghost seeds (UI animates) ----------------
+
+    private fun handleDeletions(
+        oldText: String,
+        newText: String,
+        layout: TextLayoutResult
+    ) {
+        if (newText.length >= oldText.length) return
+
+        val deletedCount = oldText.length - newText.length
+        val startIndex = newText.length
+
+        for (i in 0 until deletedCount) {
+            val charIndex = startIndex + i
+            if (charIndex >= oldText.length) break
+
+            val ch = oldText[charIndex]
+            val box = layout.getBoundingBox(charIndex)
+
+            spawnBackspaceGhost(
+                char = ch,
+                box = box,
+                stepIndex = i
+            )
+        }
+    }
+
+    private fun spawnBackspaceGhost(
+        char: Char,
+        box: Rect,
+        stepIndex: Int
+    ) {
+        val seed = GhostSeed(
+            id = System.nanoTime(),
+            char = char,
+            baseX = box.left,
+            baseY = box.top,
+            order = stepIndex
+        )
+        viewModelScope.launch {
+            _ghostEvents.send(GhostEvent.Backspace(seed, delayMs = stepIndex * 18L))
+        }
+    }
+
+    private fun spawnClearAllGhosts(
+        text: String,
+        layout: TextLayoutResult
+    ) {
+        val total = text.length
+        if (total == 0) return
+
+        val indices = (0 until total).toList().reversed()
+        val smartDelay = when {
+            total > 30 -> 3L
+            total > 20 -> 5L
+            total > 10 -> 8L
+            else -> 12L
+        }
+
+        val seeds = indices.mapIndexed { order, charIndex ->
+            val ch = text[charIndex]
+            val box = layout.getBoundingBox(charIndex)
+            GhostSeed(
+                id = System.nanoTime(),
+                char = ch,
+                baseX = box.left,
+                baseY = box.top,
+                order = order
+            )
+        }
+
+        viewModelScope.launch {
+            _ghostEvents.send(GhostEvent.Clear(seeds = seeds, smartDelayMs = smartDelay))
         }
     }
 }
