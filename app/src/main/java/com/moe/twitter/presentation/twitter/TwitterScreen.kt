@@ -88,6 +88,7 @@ fun TwitterScreen(
                 StatCard(
                     title = "Characters Remaining",
                     value = state.metrics.remaining.toString(),
+                    emphasizeNegative = true,
                     modifier = Modifier.weight(1f)
                 )
             }

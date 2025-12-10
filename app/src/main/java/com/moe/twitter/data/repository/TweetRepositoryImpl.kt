@@ -18,7 +18,7 @@ class TweetRepositoryImpl(
     override suspend fun calculateMetrics(text: String, maxCharacters: Int): TweetMetrics {
         val parsed = TwitterTextParser.parseTweet(text)
         val weighted = parsed.weightedLength
-        val remaining = (maxCharacters - weighted).coerceAtLeast(0)
+        val remaining = maxCharacters - weighted
         val withinLimit = weighted <= maxCharacters
         return TweetMetrics(
             weightedLength = weighted,

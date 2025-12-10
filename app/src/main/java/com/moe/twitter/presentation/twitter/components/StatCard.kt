@@ -27,6 +27,7 @@ fun StatCard(
     title: String,
     value: String,
     staticSuffix: String? = null,
+    emphasizeNegative: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -65,13 +66,14 @@ fun StatCard(
                     .padding(vertical = 10.dp),
                 contentAlignment = Alignment.Center
             ) {
+                val isNegative = emphasizeNegative && value.startsWith("-")
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
                     AnimatedNumber(
                         value = value,
                         style = androidx.compose.ui.text.TextStyle(
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF111827)
+                            color = if (isNegative) Color(0xFFE0245E) else Color(0xFF111827)
                         )
                     )
                     staticSuffix?.let {
@@ -79,7 +81,7 @@ fun StatCard(
                             text = it,
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF111827)
+                            color = if (isNegative) Color(0xFFE0245E) else Color(0xFF111827)
                         )
                     }
                 }
