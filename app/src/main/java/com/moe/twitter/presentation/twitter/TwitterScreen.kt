@@ -1,6 +1,5 @@
 package com.moe.twitter.presentation.twitter
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,7 +12,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -25,7 +23,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -36,6 +33,7 @@ import com.moe.twitter.presentation.twitter.components.DissolveTextArea
 import com.moe.twitter.presentation.twitter.components.StatCard
 import com.moe.twitter.presentation.twitter.components.TwitterTopBar
 import com.moe.twitter.presentation.twitter.components.TwitterLogo
+import com.moe.twitter.presentation.twitter.components.PostTweetButton
 import kotlinx.coroutines.flow.Flow
 
 @Composable
@@ -73,6 +71,7 @@ fun TwitterScreen(
                     .size(64.dp)
                     .align(Alignment.CenterHorizontally)
             )
+
             Spacer(modifier = Modifier.height(18.dp))
 
             Row(
@@ -143,27 +142,11 @@ fun TwitterScreen(
 
             Spacer(modifier = Modifier.height(18.dp))
 
-            Button(
-                onClick = { onActionState(TwitterAction.OnPost) },
+            PostTweetButton(
+                state = state,
+                onPost = { onActionState(TwitterAction.OnPost) },
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(54.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF1DA1F2),
-                    contentColor = Color.White
-                ),
-                shape = RoundedCornerShape(12.dp),
-                enabled = state.text.isNotEmpty() &&
-                        state.metrics.withinLimit &&
-                        !state.isPosting
-            ) {
-                Text(
-                    text = if (state.isPosting) "Posting..." else "Post tweet",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    textAlign = TextAlign.Center
-                )
-            }
+            )
         }
     }
 }

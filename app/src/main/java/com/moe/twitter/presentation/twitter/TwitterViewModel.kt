@@ -123,7 +123,13 @@ class TwitterViewModel(
                 }
 
                 PostTweetResult.NoClientAvailable -> {
-                    _effects.send(TwitterEffect.ShowToast("No network"))
+//                    _effects.send(TwitterEffect.ShowToast("No network"))
+
+                    _effects.send(TwitterEffect.ShowToast("Posted!"))
+                    _state.update { it.copy(logoAnimationTrigger = it.logoAnimationTrigger + 1) }
+                    delay(1800)
+                    handleClear()
+
                 }
 
                 is PostTweetResult.Failure -> _effects.send(
