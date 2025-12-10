@@ -9,13 +9,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -23,17 +19,13 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.moe.twitter.R
-import com.moe.twitter.presentation.twitter.GhostEvent
 import com.moe.twitter.presentation.twitter.components.DissolveTextArea
-import com.moe.twitter.presentation.twitter.components.StatCard
-import com.moe.twitter.presentation.twitter.components.TwitterTopBar
-import com.moe.twitter.presentation.twitter.components.TwitterLogo
 import com.moe.twitter.presentation.twitter.components.PostTweetButton
+import com.moe.twitter.presentation.twitter.components.StatCard
+import com.moe.twitter.presentation.twitter.components.TwitterLogo
+import com.moe.twitter.presentation.twitter.components.TwitterActionButton
+import com.moe.twitter.presentation.twitter.components.TwitterTopBar
 import kotlinx.coroutines.flow.Flow
 
 @Composable
@@ -104,41 +96,60 @@ fun TwitterScreen(
             Spacer(modifier = Modifier.height(14.dp))
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                modifier = Modifier
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Button(
+                TwitterActionButton(
+                    text = "Copy Text",
+                    background = Color(0xFF27AE60),
                     onClick = { onActionState(TwitterAction.OnCopy) },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF27AE60),
-                        contentColor = Color.White
-                    ),
-                    shape = RoundedCornerShape(10.dp)
-                ) {
-                    Text(
-                        text = "Copy Text",
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 14.sp
-                    )
-                }
+                )
 
-                Button(
+
+                TwitterActionButton(
+                    text = "Clear Text",
+                    background = Color(0xFFE63946),
                     onClick = { onActionState(TwitterAction.OnClear) },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFE63946),
-                        contentColor = Color.White
-                    ),
-                    shape = RoundedCornerShape(10.dp)
-                ) {
-                    Text(
-                        text = "Clear Text",
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 14.sp
-                    )
-                }
+                )
             }
+
+//            Row(
+//                modifier = Modifier.fillMaxWidth(),
+//                horizontalArrangement = Arrangement.SpaceBetween
+//            ) {
+//                Button(
+//                    onClick = { onActionState(TwitterAction.OnCopy) },
+////                    modifier = Modifier.weight(1f),
+//                    colors = ButtonDefaults.buttonColors(
+//                        containerColor = Color(0xFF27AE60),
+//                        contentColor = Color.White
+//                    ),
+//                    shape = RoundedCornerShape(10.dp)
+//                ) {
+//                    Text(
+//                        text = "Copy Text",
+//                        fontWeight = FontWeight.SemiBold,
+//                        fontSize = 14.sp
+//                    )
+//                }
+//
+//                Button(
+//                    onClick = { onActionState(TwitterAction.OnClear) },
+////                    modifier = Modifier.weight(1f),
+//                    colors = ButtonDefaults.buttonColors(
+//                        containerColor = Color(0xFFE63946),
+//                        contentColor = Color.White
+//                    ),
+//                    shape = RoundedCornerShape(10.dp)
+//                ) {
+//                    Text(
+//                        text = "Clear Text",
+//                        fontWeight = FontWeight.SemiBold,
+//                        fontSize = 14.sp
+//                    )
+//                }
+//            }
 
             Spacer(modifier = Modifier.height(18.dp))
 
