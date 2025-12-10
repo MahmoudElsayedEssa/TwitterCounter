@@ -1,11 +1,9 @@
 package com.moe.twitter.data.repository
 
 import com.moe.twitter.data.remote.NetworkErrorMapper
-import com.moe.twitter.data.remote.api.LanguageToolApi
 import com.moe.twitter.data.remote.api.TwitterApiService
 import com.moe.twitter.data.remote.model.PostTweetRequest
 import com.moe.twitter.domain.model.PostTweetResult
-import com.moe.twitter.domain.model.TextIssue
 import com.moe.twitter.domain.model.TweetMetrics
 import com.moe.twitter.domain.repository.TweetRepository
 import com.twitter.twittertext.TwitterTextParser
@@ -15,7 +13,6 @@ import kotlinx.coroutines.withContext
 
 class TweetRepositoryImpl(
     private val twitterApiService: TwitterApiService,
-    private val languageToolApi: LanguageToolApi,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : TweetRepository {
     override suspend fun calculateMetrics(text: String, maxCharacters: Int): TweetMetrics {
@@ -53,36 +50,4 @@ class TweetRepositoryImpl(
         }
     }
 
-    override suspend fun checkTextIssues(
-        text: String,
-        language: String
-    ): List<TextIssue> = withContext(ioDispatcher) {
-        if (text.isBlank()) return@withContext emptyList()
-
-        try {
-            val response = languageToolApi.checkText(
-                text = text,
-                language = language
-            )
-
-            response.matches.mapNotNull { match ->
-                val offset = match.offset ?: return@mapNotNull null
-                val length = match.length ?: return@mapNotNull null
-
-                val start = offset.coerceIn(0, text.length)
-                val end = (offset + length).coerceIn(start, text.length)
-                if (start >= end) return@mapNotNull null
-
-                TextIssue(
-                    start = start,
-                    end = end,
-                    message = match.message,
-                    issueType = match.rule?.issueType,
-                    ruleId = match.rule?.id
-                )
-            }
-        } catch (_: Exception) {
-            emptyList()
-        }
-    }
 }
