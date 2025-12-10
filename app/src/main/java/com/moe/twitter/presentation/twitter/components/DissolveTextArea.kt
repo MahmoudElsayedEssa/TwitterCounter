@@ -20,10 +20,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
@@ -31,20 +33,18 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.TextLayoutResult
 import com.moe.twitter.presentation.twitter.GhostCharUi
 import com.moe.twitter.presentation.twitter.GhostEvent
 import com.moe.twitter.presentation.twitter.GhostSeed
 import com.moe.twitter.presentation.twitter.TwitterState
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
+import java.lang.StrictMath.PI
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.random.Random
-import java.lang.StrictMath.PI
-import kotlinx.coroutines.coroutineScope
 
 @Composable
 fun DissolveTextArea(
@@ -62,11 +62,8 @@ fun DissolveTextArea(
                 if (original.text.length > state.maxChars) {
                     addStyle(
                         style = SpanStyle(
-                            background = Color(0x33E0245E),
-                            color = Color(0xFFE0245E)
-                        ),
-                        start = state.maxChars,
-                        end = original.length
+                            background = Color(0x33E0245E), color = Color(0xFFE0245E)
+                        ), start = state.maxChars, end = original.length
                     )
                 }
 
@@ -83,11 +80,8 @@ fun DissolveTextArea(
 
                     addStyle(
                         style = SpanStyle(
-                            color = color,
-                            textDecoration = TextDecoration.Underline
-                        ),
-                        start = safeStart,
-                        end = safeEnd
+                            color = color, textDecoration = TextDecoration.Underline
+                        ), start = safeStart, end = safeEnd
                     )
                 }
             }.toAnnotatedString()
@@ -109,6 +103,7 @@ fun DissolveTextArea(
                         animateBackspaceGhost(render, ghosts)
                     }
                 }
+
                 is GhostEvent.Clear -> {
                     event.seeds.forEach { seed ->
                         launch {
@@ -123,13 +118,23 @@ fun DissolveTextArea(
         }
     }
 
+    // rgba(6, 26, 64, 0.04)
+    val shadowColor = Color(red = 6, green = 26, blue = 64, alpha = (0.4f * 255).toInt())
     Box(
         modifier = modifier
-            .fillMaxWidth()
-            .height(220.dp)
             .background(Color.White, RoundedCornerShape(12.dp))
-            .border(1.dp, Color(0xFFE5E7EB), RoundedCornerShape(12.dp))
-            .padding(14.dp)
+            .shadow(
+                elevation = 24.dp,              // big, soft-ish
+                shape = RoundedCornerShape(12.dp),
+                clip = false,
+                ambientColor = shadowColor,
+                spotColor = shadowColor
+            )
+            .background(Color.White, RoundedCornerShape(12.dp)) // then the white card
+            .border(
+                width = 1.dp, color = Color(0xFFEDEDED), shape = RoundedCornerShape(12.dp)
+            )
+            .padding(16.dp)
     ) {
         BasicTextField(
             value = state.text,
@@ -138,9 +143,7 @@ fun DissolveTextArea(
                 .fillMaxWidth()
                 .height(188.dp),
             textStyle = TextStyle(
-                fontSize = 16.sp,
-                color = Color(0xFF14171A),
-                lineHeight = 24.sp
+                fontSize = 16.sp, color = Color(0xFF14171A), lineHeight = 24.sp
             ),
             cursorBrush = SolidColor(Color(0xFF1DA1F2)),
             visualTransformation = overflowAndErrorsTransform,
@@ -149,11 +152,12 @@ fun DissolveTextArea(
 
         if (state.text.isEmpty()) {
             Text(
-                "Start typing! You can enter up to 280 characters",
-                fontSize = 16.sp,
-                color = Color(0xFF9CA3AF),
-                lineHeight = 24.sp
+                text = "Start typing! You can enter up to 280 characters",
+                fontSize = 14.sp,
+                lineHeight = 22.sp,
+                color = Color(0xFF5E6160)
             )
+
         }
 
         GhostLayer(ghosts = ghosts.map { it.toUi() })
@@ -199,8 +203,7 @@ private data class GhostRender(
 }
 
 private suspend fun animateBackspaceGhost(
-    ghost: GhostRender,
-    list: MutableList<GhostRender>
+    ghost: GhostRender, list: MutableList<GhostRender>
 ) {
     coroutineScope {
         launch {
@@ -209,14 +212,12 @@ private suspend fun animateBackspaceGhost(
         }
         launch {
             ghost.offsetX.animateTo(
-                Random.nextInt(120, 180).toFloat(),
-                tween(220, easing = EaseInCubic)
+                Random.nextInt(120, 180).toFloat(), tween(220, easing = EaseInCubic)
             )
         }
         launch {
             ghost.offsetY.animateTo(
-                Random.nextInt(-150, -110).toFloat(),
-                tween(220, easing = EaseInOutCubic)
+                Random.nextInt(-150, -110).toFloat(), tween(220, easing = EaseInOutCubic)
             )
         }
         launch {
@@ -224,8 +225,7 @@ private suspend fun animateBackspaceGhost(
         }
         launch {
             ghost.rotation.animateTo(
-                Random.nextInt(60, 90).toFloat(),
-                tween(220, easing = EaseInOutCubic)
+                Random.nextInt(60, 90).toFloat(), tween(220, easing = EaseInOutCubic)
             )
         }
     }
@@ -234,8 +234,7 @@ private suspend fun animateBackspaceGhost(
 }
 
 private suspend fun animateExplosionGhost(
-    ghost: GhostRender,
-    list: MutableList<GhostRender>
+    ghost: GhostRender, list: MutableList<GhostRender>
 ) {
     val angle = Random.nextDouble() * 2 * PI
     val distance = Random.nextInt(100, 180).toFloat()
@@ -248,22 +247,19 @@ private suspend fun animateExplosionGhost(
     coroutineScope {
         launch {
             ghost.offsetX.animateTo(
-                targetX,
-                tween(350, easing = EaseOutCubic)
+                targetX, tween(350, easing = EaseOutCubic)
             )
         }
         launch {
             ghost.offsetY.animateTo(
-                targetY,
-                tween(350, easing = EaseOutCubic)
+                targetY, tween(350, easing = EaseOutCubic)
             )
         }
         launch {
             ghost.scale.animateTo(1.12f, tween(80, easing = EaseOutCubic))
             ghost.scale.animateTo(1.0f, tween(80, easing = EaseInOutCubic))
             ghost.scale.animateTo(
-                0.25f,
-                tween(220, easing = EaseInCubic)
+                0.25f, tween(220, easing = EaseInCubic)
             )
         }
         launch {
@@ -273,12 +269,10 @@ private suspend fun animateExplosionGhost(
         }
         launch {
             ghost.rotation.animateTo(
-                midRot,
-                tween(90, easing = EaseOutCubic)
+                midRot, tween(90, easing = EaseOutCubic)
             )
             ghost.rotation.animateTo(
-                finalRot,
-                tween(260, easing = EaseInOutCubic)
+                finalRot, tween(260, easing = EaseInOutCubic)
             )
         }
     }
