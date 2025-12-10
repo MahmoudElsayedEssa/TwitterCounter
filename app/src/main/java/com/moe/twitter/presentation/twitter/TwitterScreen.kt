@@ -66,7 +66,7 @@ fun TwitterScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             TwitterLogo(
-                trigger = state.logoAnimationTrigger,
+                postingState = state.postingState,
                 modifier = Modifier
                     .size(64.dp)
                     .align(Alignment.CenterHorizontally)

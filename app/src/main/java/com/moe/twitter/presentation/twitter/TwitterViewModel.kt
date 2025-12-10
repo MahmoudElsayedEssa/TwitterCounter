@@ -104,6 +104,8 @@ class TwitterViewModel(
     private fun handlePost() {
         viewModelScope.launch {
             val current = _state.value.text
+
+            // Validation
             if (current.isBlank()) {
                 _effects.send(TwitterEffect.ShowToast("Cannot post empty text"))
                 return@launch
@@ -113,30 +115,39 @@ class TwitterViewModel(
                 return@launch
             }
 
-            _state.update { it.copy(isPosting = true) }
+            // Set posting state atomically
+            _state.update { it.copy(postingState = PostingState.Posting) }
+
             when (val result = postTweetUseCase(current)) {
                 PostTweetResult.Success -> {
+                    // Update to success state atomically
+                    _state.update { it.copy(postingState = PostingState.Success) }
                     _effects.send(TwitterEffect.ShowToast("Posted!"))
-                    _state.update { it.copy(logoAnimationTrigger = it.logoAnimationTrigger + 1) }
+
+                    // Wait for animation, then reset
                     delay(1800)
                     handleClear()
+                    _state.update { it.copy(postingState = PostingState.Idle) }
                 }
 
                 PostTweetResult.NoClientAvailable -> {
-//                    _effects.send(TwitterEffect.ShowToast("No network"))
-
-                    _effects.send(TwitterEffect.ShowToast("Posted!"))
-                    _state.update { it.copy(logoAnimationTrigger = it.logoAnimationTrigger + 1) }
-                    delay(1800)
-                    handleClear()
-
+                    _state.update { it.copy(postingState = PostingState.Error("No client available")) }
+                    _effects.send(TwitterEffect.ShowToast("NO CLIENT!"))
+                    delay(1500)
+                    _state.update { it.copy(postingState = PostingState.Idle) }
                 }
 
-                is PostTweetResult.Failure -> _effects.send(
-                    TwitterEffect.ShowToast(result.message ?: "Post failed")
-                )
+                is PostTweetResult.Failure -> {
+                    val errorMsg = result.message ?: "Post failed"
+                    // Update to error state atomically
+                    _state.update { it.copy(postingState = PostingState.Error(errorMsg)) }
+                    _effects.send(TwitterEffect.ShowToast(errorMsg))
+
+                    // Reset to idle after error display
+                    delay(2000)
+                    _state.update { it.copy(postingState = PostingState.Idle) }
+                }
             }
-            _state.update { it.copy(isPosting = false) }
         }
     }
 

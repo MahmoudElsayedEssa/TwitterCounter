@@ -5,6 +5,16 @@ import androidx.compose.ui.text.TextLayoutResult
 import com.moe.twitter.domain.model.TextIssue
 import com.moe.twitter.domain.model.TweetMetrics
 
+/**
+ * Represents the posting state using a sealed class for type safety and exhaustive handling.
+ */
+sealed interface PostingState {
+    data object Idle : PostingState
+    data object Posting : PostingState
+    data object Success : PostingState
+    data class Error(val message: String) : PostingState
+}
+
 @Immutable
 data class TwitterState(
     val text: String = "",
@@ -16,10 +26,8 @@ data class TwitterState(
     ),
     val errors: List<TextIssue> = emptyList(),
     val isChecking: Boolean = false,
-    val isPosting: Boolean = false,
-    val postSuccess: Boolean = false,
+    val postingState: PostingState = PostingState.Idle,
     val clearSignal: Int = 0,
-    val logoAnimationTrigger: Int = 0,
 )
 
 interface TwitterAction {
