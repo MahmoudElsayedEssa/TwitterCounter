@@ -17,7 +17,9 @@ data class TwitterState(
     val errors: List<TextIssue> = emptyList(),
     val isChecking: Boolean = false,
     val isPosting: Boolean = false,
-    val clearSignal: Int = 0
+    val clearSignal: Int = 0,
+    val logoAnimationTrigger: Int = 0,
+    val shouldReturnLogo: Boolean = false
 )
 
 interface TwitterAction {

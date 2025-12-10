@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -34,12 +35,13 @@ import com.moe.twitter.presentation.twitter.GhostEvent
 import com.moe.twitter.presentation.twitter.components.DissolveTextArea
 import com.moe.twitter.presentation.twitter.components.StatCard
 import com.moe.twitter.presentation.twitter.components.TwitterTopBar
+import com.moe.twitter.presentation.twitter.components.TwitterLogo
 import kotlinx.coroutines.flow.Flow
 
 @Composable
 fun TwitterScreen(
     state: TwitterState,
-    ghostEvents: kotlinx.coroutines.flow.Flow<GhostEvent>,
+    ghostEvents: Flow<GhostEvent>,
     onAction: (TwitterAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -65,14 +67,12 @@ fun TwitterScreen(
         ) {
             Spacer(modifier = Modifier.height(8.dp))
 
-            Image(
-                painter = painterResource(id = R.drawable.ic_twitter_logo),
-                contentDescription = "Twitter logo",
+            TwitterLogo(
+                trigger = state.logoAnimationTrigger,
                 modifier = Modifier
-                    .size(56.dp)
+                    .size(64.dp)
                     .align(Alignment.CenterHorizontally)
             )
-
             Spacer(modifier = Modifier.height(18.dp))
 
             Row(

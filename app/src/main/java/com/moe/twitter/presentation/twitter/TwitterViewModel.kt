@@ -1,5 +1,7 @@
 package com.moe.twitter.presentation.twitter
 
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.moe.twitter.domain.model.PostTweetResult
@@ -15,11 +17,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.text.TextLayoutResult
-import com.moe.twitter.presentation.twitter.TwitterAction
-import com.moe.twitter.presentation.twitter.GhostEvent
-import com.moe.twitter.presentation.twitter.GhostSeed
 
 class TwitterViewModel(
     private val postTweetUseCase: PostTweetUseCase,
@@ -111,11 +108,24 @@ class TwitterViewModel(
                 _effects.send(TwitterEffect.ShowToast("Cannot post empty text"))
                 return@launch
             }
+            if (!_state.value.metrics.withinLimit) {
+                _effects.send(TwitterEffect.ShowToast("Text exceeds 280 characters"))
+                return@launch
+            }
 
             _state.update { it.copy(isPosting = true) }
             when (val result = postTweetUseCase(current)) {
-                PostTweetResult.Success -> _effects.send(TwitterEffect.ShowToast("Posted!"))
-                PostTweetResult.NoClientAvailable -> _effects.send(TwitterEffect.ShowToast("No network"))
+                PostTweetResult.Success -> {
+                    _effects.send(TwitterEffect.ShowToast("Posted!"))
+                    _state.update { it.copy(logoAnimationTrigger = it.logoAnimationTrigger + 1) }
+                    delay(1800)
+                    handleClear()
+                }
+
+                PostTweetResult.NoClientAvailable -> {
+                    _effects.send(TwitterEffect.ShowToast("No network"))
+                }
+
                 is PostTweetResult.Failure -> _effects.send(
                     TwitterEffect.ShowToast(result.message ?: "Post failed")
                 )
