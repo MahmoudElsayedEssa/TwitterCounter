@@ -1,4 +1,4 @@
-package com.moe.twitter.presentation.model
+package com.moe.twitter.domain.model
 
 sealed class PostTweetResult {
     data object Success : PostTweetResult()

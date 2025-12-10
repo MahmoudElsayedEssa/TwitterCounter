@@ -1,4 +1,4 @@
-package com.moe.twitter.presentation.model
+package com.moe.twitter.domain.model
 
 data class TweetMetrics(
     val weightedLength: Int,

@@ -1,7 +1,7 @@
-package com.moe.twitter.presentation.repository
+package com.moe.twitter.domain.repository
 
-import com.moe.twitter.presentation.model.PostTweetResult
-import com.moe.twitter.presentation.model.TweetMetrics
+import com.moe.twitter.domain.model.PostTweetResult
+import com.moe.twitter.domain.model.TweetMetrics
 
 interface TweetRepository {
     suspend fun calculateMetrics(text: String, maxCharacters: Int): TweetMetrics
