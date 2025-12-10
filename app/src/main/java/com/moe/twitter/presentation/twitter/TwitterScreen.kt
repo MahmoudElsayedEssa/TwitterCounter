@@ -81,7 +81,8 @@ fun TwitterScreen(
             ) {
                 StatCard(
                     title = "Characters Typed",
-                    value = "${state.metrics.weightedLength}/${state.maxChars}",
+                    value = state.metrics.weightedLength.toString(),
+                    staticSuffix = "/${state.maxChars}",
                     modifier = Modifier.weight(1f)
                 )
                 StatCard(

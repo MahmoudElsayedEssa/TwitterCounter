@@ -2,8 +2,10 @@ package com.moe.twitter.presentation.twitter.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -24,6 +26,7 @@ import com.moe.twitter.presentation.twitter.components.AnimatedNumber
 fun StatCard(
     title: String,
     value: String,
+    staticSuffix: String? = null,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -62,14 +65,24 @@ fun StatCard(
                     .padding(vertical = 10.dp),
                 contentAlignment = Alignment.Center
             ) {
-                AnimatedNumber(
-                    value = value,
-                    style = androidx.compose.ui.text.TextStyle(
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF111827)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+                    AnimatedNumber(
+                        value = value,
+                        style = androidx.compose.ui.text.TextStyle(
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF111827)
+                        )
                     )
-                )
+                    staticSuffix?.let {
+                        Text(
+                            text = it,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF111827)
+                        )
+                    }
+                }
             }
         }
     }
