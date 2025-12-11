@@ -51,6 +51,4 @@ TWITTER_BEARER_TOKEN=your_bearer_token
 - The tweet composer UI lives in a dedicated package and can be embedded elsewhere.
 - Provide valid Twitter credentials to exercise the posting flow; otherwise, use tests to verify logic without hitting the network.
 
-## Submission
-Push the repo to GitHub and share the link per the challenge instructions.
 
