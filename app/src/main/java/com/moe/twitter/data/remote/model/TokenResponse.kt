@@ -9,3 +9,4 @@ data class TokenResponse(
     @SerializedName("refresh_token") val refreshToken: String?,
     @SerializedName("scope") val scope: String?
 )
+

@@ -79,7 +79,15 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    // Unit Testing
     testImplementation(libs.junit)
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
+    testImplementation("app.cash.turbine:turbine:1.1.0")
+    testImplementation("io.mockk:mockk:1.13.13")
+    testImplementation("io.insert-koin:koin-test:4.0.0")
+    testImplementation("io.insert-koin:koin-test-junit4:4.0.0")
+
+    // Android Testing
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
