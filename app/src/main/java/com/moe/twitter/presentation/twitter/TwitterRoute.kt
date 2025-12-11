@@ -8,11 +8,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.moe.twitter.presentation.twitter.components.GhostEffectCoordinator
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -21,6 +24,9 @@ fun TwitterRoute() {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+
+    val scope = rememberCoroutineScope()
+    val ghostCoordinator = remember { GhostEffectCoordinator(scope) }
 
     LaunchedEffect(Unit) {
         viewModel.effects.collect { effect ->
@@ -39,7 +45,7 @@ fun TwitterRoute() {
 
     TwitterScreen(
         state = state,
-        ghostEvents = viewModel.ghostEvents,
+        ghostCoordinator = ghostCoordinator,
         onAction = viewModel::onAction
     )
 

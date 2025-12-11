@@ -39,8 +39,6 @@ import androidx.compose.ui.unit.sp
 import com.moe.twitter.domain.model.TweetMetrics
 import com.moe.twitter.presentation.twitter.PostingState
 import com.moe.twitter.presentation.twitter.TwitterState
-import com.moe.twitter.presentation.twitter.components.morph.MorphConfig
-import com.moe.twitter.presentation.twitter.components.morph.TextTransition
 import com.moe.twitter.ui.theme.TwitterCounterTheme
 import com.moe.twitter.ui.theme.twitterColors
 import kotlinx.coroutines.delay
@@ -205,7 +203,7 @@ private fun PostTweetButtonIdlePreview() {
     TwitterCounterTheme {
         Surface {
     PostTweetButton(
-                state = TwitterState.Content(
+                state = TwitterState(
                     text = "Hello Twitter!",
                     metrics = TweetMetrics(14, 266, true),
                     postingState = PostingState.Idle
@@ -223,7 +221,7 @@ private fun PostTweetButtonPostingPreview() {
     TwitterCounterTheme {
         Surface {
             PostTweetButton(
-                state = TwitterState.Content(
+                state = TwitterState(
                     text = "Hello Twitter!",
                     metrics = TweetMetrics(14, 266, true),
                     postingState = PostingState.Posting
@@ -241,7 +239,7 @@ private fun PostTweetButtonSuccessPreview() {
     TwitterCounterTheme {
         Surface {
             PostTweetButton(
-                state = TwitterState.Content(
+                state = TwitterState(
                     text = "Hello Twitter!",
                     metrics = TweetMetrics(14, 266, true),
                     postingState = PostingState.Success
@@ -259,7 +257,7 @@ private fun PostTweetButtonErrorPreview() {
     TwitterCounterTheme {
         Surface {
             PostTweetButton(
-                state = TwitterState.Content(
+                state = TwitterState(
                     text = "Hello Twitter!",
                     metrics = TweetMetrics(14, 266, true),
                     postingState = PostingState.Error("Network error")
@@ -277,7 +275,7 @@ private fun PostTweetButtonInvalidEmptyPreview() {
     TwitterCounterTheme {
         Surface {
             PostTweetButton(
-                state = TwitterState.Content(
+                state = TwitterState(
                     text = "",
                     metrics = TweetMetrics(0, 280, true),
                     postingState = PostingState.Idle
@@ -295,7 +293,7 @@ private fun PostTweetButtonInvalidLongPreview() {
     TwitterCounterTheme {
         Surface {
             PostTweetButton(
-                state = TwitterState.Content(
+                state = TwitterState(
                     text = "x".repeat(300),
                     metrics = TweetMetrics(300, -20, false),
                     postingState = PostingState.Idle

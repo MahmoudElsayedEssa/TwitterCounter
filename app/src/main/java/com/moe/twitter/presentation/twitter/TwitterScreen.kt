@@ -32,13 +32,11 @@ import com.moe.twitter.presentation.twitter.components.TwitterLogo
 import com.moe.twitter.presentation.twitter.components.TwitterTopBar
 import com.moe.twitter.ui.theme.TwitterCounterTheme
 import com.moe.twitter.ui.theme.twitterColors
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 
 @Composable
 fun TwitterScreen(
     state: TwitterState,
-    ghostEvents: Flow<GhostEvent>,
+    ghostCoordinator: com.moe.twitter.presentation.twitter.components.GhostEffectCoordinator,
     onAction: (TwitterAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -56,85 +54,81 @@ fun TwitterScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
-        when (state) {
-            is TwitterState.Content -> {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .imePadding()
-                        .padding(innerPadding)
-                        .padding(horizontal = 20.dp, vertical = 12.dp)
-                ) {
-                    Spacer(modifier = Modifier.height(8.dp))
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .imePadding()
+                .padding(innerPadding)
+                .padding(horizontal = 20.dp, vertical = 12.dp)
+        ) {
+            Spacer(modifier = Modifier.height(8.dp))
 
-                    TwitterLogo(
-                        postingState = state.postingState,
-                        modifier = Modifier
-                            .size(64.dp)
-                            .align(Alignment.CenterHorizontally)
-                    )
+            TwitterLogo(
+                postingState = state.postingState,
+                modifier = Modifier
+                    .size(64.dp)
+                    .align(Alignment.CenterHorizontally)
+            )
 
-                    Spacer(modifier = Modifier.height(18.dp))
+            Spacer(modifier = Modifier.height(18.dp))
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        StatCard(
-                            title = "Characters Typed",
-                            value = state.metrics.weightedLength.toString(),
-                            staticSuffix = "/${state.maxChars}",
-                            modifier = Modifier.weight(1f)
-                        )
-                        StatCard(
-                            title = "Characters Remaining",
-                            value = state.metrics.remaining.toString(),
-                            emphasizeNegative = true,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(18.dp))
-
-                    DissolveTextArea(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = 240.dp)
-                            .weight(1f, fill = false),
-                        state = state,
-                        onTextChange = { onActionState(TwitterAction.OnTextChange(it)) },
-                        onTextLayout = { onActionState(TwitterAction.OnTextLayout(it)) },
-                        ghostEvents = ghostEvents
-                    )
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        TwitterActionButton(
-                            text = "Copy Text",
-                            background = MaterialTheme.twitterColors.SuccessGreen,
-                            onClick = { onActionState(TwitterAction.OnCopy) }
-                        )
-
-                        TwitterActionButton(
-                            text = "Clear Text",
-                            background = MaterialTheme.twitterColors.ErrorRed,
-                            onClick = { onActionState(TwitterAction.OnClear) }
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(18.dp))
-
-                    PostTweetButton(
-                        state = state,
-                        onPost = { onActionState(TwitterAction.OnPost) },
-                        modifier = Modifier
-                    )
-                }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                StatCard(
+                    title = "Characters Typed",
+                    value = state.metrics.weightedLength.toString(),
+                    staticSuffix = "/280",
+                    modifier = Modifier.weight(1f)
+                )
+                StatCard(
+                    title = "Characters Remaining",
+                    value = state.metrics.remaining.toString(),
+                    emphasizeNegative = true,
+                    modifier = Modifier.weight(1f)
+                )
             }
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            DissolveTextArea(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 240.dp)
+                    .weight(1f, fill = false),
+                state = state,
+                ghostCoordinator = ghostCoordinator,
+                onTextChange = { onActionState(TwitterAction.OnTextChange(it)) },
+                onClear = { onActionState(TwitterAction.OnClear) }
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                TwitterActionButton(
+                    text = "Copy Text",
+                    background = MaterialTheme.twitterColors.SuccessGreen,
+                    onClick = { onActionState(TwitterAction.OnCopy) }
+                )
+
+                TwitterActionButton(
+                    text = "Clear Text",
+                    background = MaterialTheme.twitterColors.ErrorRed,
+                    onClick = { onActionState(TwitterAction.OnClear) }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            PostTweetButton(
+                state = state,
+                onPost = { onActionState(TwitterAction.OnPost) },
+                modifier = Modifier
+            )
         }
     }
 }
@@ -142,14 +136,16 @@ fun TwitterScreen(
 @Preview(name = "Twitter Screen - Empty", showBackground = true, heightDp = 800)
 @Composable
 private fun TwitterScreenEmptyPreview() {
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    val coordinator = remember { com.moe.twitter.presentation.twitter.components.GhostEffectCoordinator(scope) }
     TwitterCounterTheme {
         TwitterScreen(
-            state = TwitterState.Content(
+            state = TwitterState(
                 text = "",
                 metrics = TweetMetrics(0, 280, true),
                 postingState = PostingState.Idle
             ),
-            ghostEvents = MutableStateFlow<GhostEvent>(GhostEvent.Clear(emptyList(), 0)),
+            ghostCoordinator = coordinator,
             onAction = {}
         )
     }
@@ -158,14 +154,16 @@ private fun TwitterScreenEmptyPreview() {
 @Preview(name = "Twitter Screen - With Text", showBackground = true, heightDp = 800)
 @Composable
 private fun TwitterScreenWithTextPreview() {
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    val coordinator = remember { com.moe.twitter.presentation.twitter.components.GhostEffectCoordinator(scope) }
     TwitterCounterTheme {
         TwitterScreen(
-            state = TwitterState.Content(
+            state = TwitterState(
                 text = "Hello Twitter! This is a sample tweet.",
                 metrics = TweetMetrics(39, 241, true),
                 postingState = PostingState.Idle
             ),
-            ghostEvents = MutableStateFlow<GhostEvent>(GhostEvent.Clear(emptyList(), 0)),
+            ghostCoordinator = coordinator,
             onAction = {}
         )
     }

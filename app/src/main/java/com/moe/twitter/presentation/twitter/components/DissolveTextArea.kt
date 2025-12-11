@@ -34,9 +34,6 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.moe.twitter.presentation.twitter.GhostCharUi
-import com.moe.twitter.presentation.twitter.GhostEvent
-import com.moe.twitter.presentation.twitter.GhostSeed
 import com.moe.twitter.presentation.twitter.TwitterState
 import com.moe.twitter.ui.theme.twitterColors
 import kotlinx.coroutines.coroutineScope
@@ -52,23 +49,27 @@ import kotlin.random.Random
 fun DissolveTextArea(
     modifier: Modifier = Modifier,
     state: TwitterState,
+    ghostCoordinator: GhostEffectCoordinator,
     onTextChange: (String) -> Unit,
-    onTextLayout: (TextLayoutResult) -> Unit,
-    ghostEvents: Flow<GhostEvent>,
+    onClear: () -> Unit
 ) {
+    val previousText = remember { androidx.compose.runtime.mutableStateOf("") }
+    val currentLayout = remember { androidx.compose.runtime.mutableStateOf<TextLayoutResult?>(null) }
+    val previousLayout = remember { androidx.compose.runtime.mutableStateOf<TextLayoutResult?>(null) }
 
     val twitterColor = MaterialTheme.twitterColors
-    val overflowAndErrorsTransform = remember(state.text, state.errors, state.maxChars) {
+    val maxChars = 280
+    val overflowAndErrorsTransform = remember(state.text, state.errors, maxChars) {
         VisualTransformation { original: AnnotatedString ->
             val styled = AnnotatedString.Builder().apply {
                 append(original)
 
-                if (original.text.length > state.maxChars) {
+                if (original.text.length > maxChars) {
                     addStyle(
                         style = SpanStyle(
                             background = twitterColor.ErrorBackground,
                             color = twitterColor.TwitterRed
-                        ), start = state.maxChars, end = original.length
+                        ), start = maxChars, end = original.length
                     )
                 }
 
@@ -97,8 +98,37 @@ fun DissolveTextArea(
 
     val ghosts = remember { mutableStateListOf<GhostRender>() }
 
-    LaunchedEffect(ghostEvents) {
-        ghostEvents.collect { event ->
+    val handleTextChangeWithGhost: (String) -> Unit = { newText: String ->
+        val oldText = previousText.value
+        val layout = currentLayout.value
+
+        // Trigger ghost effects BEFORE updating state
+        // ONLY use handleTextChange for user typing/backspace (never handleClear here)
+        if (layout != null && oldText.isNotEmpty() && newText.length < oldText.length) {
+            ghostCoordinator.handleTextChange(oldText, newText, layout)
+        }
+
+        previousText.value = newText
+        onTextChange(newText)
+    }
+
+    // Sync previousText when state.text changes externally (e.g., from clear button)
+    LaunchedEffect(state.text) {
+        // Only update if coming from external source (clear button)
+        if (state.text != previousText.value) {
+            if (state.text.isEmpty() && previousText.value.isNotEmpty()) {
+                // Use previousLayout because currentLayout might already be updated
+                val layout = previousLayout.value
+                if (layout != null) {
+                    ghostCoordinator.handleClear(previousText.value, layout)
+                }
+            }
+            previousText.value = state.text
+        }
+    }
+
+    LaunchedEffect(ghostCoordinator) {
+        ghostCoordinator.ghostEvents.collect { event ->
             when (event) {
                 is GhostEvent.Backspace -> {
                     launch {
@@ -148,7 +178,7 @@ fun DissolveTextArea(
     ) {
         BasicTextField(
             value = state.text,
-            onValueChange = onTextChange,
+            onValueChange = handleTextChangeWithGhost,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(188.dp),
@@ -157,7 +187,11 @@ fun DissolveTextArea(
             ),
             cursorBrush = SolidColor(MaterialTheme.twitterColors.TwitterBlue),
             visualTransformation = overflowAndErrorsTransform,
-            onTextLayout = onTextLayout
+            onTextLayout = { newLayout ->
+                // Save current as previous before updating
+                previousLayout.value = currentLayout.value
+                currentLayout.value = newLayout
+            }
         )
 
         if (state.text.isEmpty()) {

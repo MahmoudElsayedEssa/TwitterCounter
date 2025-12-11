@@ -12,7 +12,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.sp
-import com.moe.twitter.presentation.twitter.GhostCharUi
 import com.moe.twitter.ui.theme.TwitterCounterTheme
 
 @Composable
