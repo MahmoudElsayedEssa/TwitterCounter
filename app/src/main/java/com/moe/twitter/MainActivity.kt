@@ -51,9 +51,15 @@ class MainActivity : ComponentActivity() {
             }
             val code = data.getQueryParameter("code")
             val error = data.getQueryParameter("error")
+            val returnedState = data.getQueryParameter("state")
+            val expectedState = tokenStorage.getState()
 
             when {
                 code != null -> {
+                    if (expectedState.isNullOrBlank() || expectedState != returnedState) {
+                        Log.e("MainActivity", "OAuth state mismatch; ignoring callback.")
+                        return
+                    }
                     Log.d("MainActivity", "Received OAuth code: $code")
                     // Clear the intent data to prevent re-processing after recreate()
                     intent?.data = null
@@ -85,8 +91,9 @@ class MainActivity : ComponentActivity() {
 
                 if (response.isSuccessful && response.body() != null) {
                     val tokenResponse = response.body()!!
-                    tokenStorage.saveAccessToken(tokenResponse.access_token)
-                    tokenResponse.refresh_token?.let { tokenStorage.saveRefreshToken(it) }
+                    tokenStorage.saveAccessToken(tokenResponse.accessToken)
+                    tokenResponse.refreshToken?.let { tokenStorage.saveRefreshToken(it) }
+                    tokenStorage.clearEphemeralAuth()
 
                     Log.d("MainActivity", "OAuth token exchange successful")
 

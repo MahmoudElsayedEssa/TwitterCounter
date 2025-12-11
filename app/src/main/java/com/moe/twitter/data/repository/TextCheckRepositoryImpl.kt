@@ -1,5 +1,6 @@
 package com.moe.twitter.data.repository
 
+import android.util.Log
 import com.moe.twitter.data.remote.api.LanguageToolApi
 import com.moe.twitter.domain.model.TextIssue
 import com.moe.twitter.domain.repository.TextCheckRepository
@@ -19,12 +20,10 @@ class TextCheckRepositoryImpl(
         if (text.isBlank()) return@withContext emptyList()
 
         try {
-            val response = languageToolApi.checkText(
+            languageToolApi.checkText(
                 text = text,
                 language = language
-            )
-
-            response.matches.mapNotNull { match ->
+            ).matches.mapNotNull { match ->
                 val offset = match.offset ?: return@mapNotNull null
                 val length = match.length ?: return@mapNotNull null
 
@@ -40,7 +39,8 @@ class TextCheckRepositoryImpl(
                     ruleId = match.rule?.id
                 )
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.e("TextCheckRepository", "Failed to check text issues", e)
             emptyList()
         }
     }

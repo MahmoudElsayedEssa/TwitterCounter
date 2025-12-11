@@ -1,4 +1,4 @@
-package com.moe.twitter.data.remote.model.languagetool
+package com.moe.twitter.data.remote.model
 
 import com.google.gson.annotations.SerializedName
 

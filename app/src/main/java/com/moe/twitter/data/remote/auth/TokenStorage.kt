@@ -41,6 +41,21 @@ interface TokenStorage {
     fun getCodeVerifier(): String?
 
     /**
+     * Stores the OAuth state parameter for validation.
+     */
+    fun saveState(state: String)
+
+    /**
+     * Retrieves the stored OAuth state parameter.
+     */
+    fun getState(): String?
+
+    /**
+     * Clears only transient auth artifacts (code verifier/state).
+     */
+    fun clearEphemeralAuth()
+
+    /**
      * Clears all stored tokens.
      */
     fun clearTokens()

@@ -12,6 +12,6 @@ data class PostTweetResponse(
 
 data class TweetData(
     val id: String?,
-    val edit_history_tweet_ids: List<String>? = null,
+    val editHistoryTweetIds: List<String>? = null,
     val text: String? = null
 )

@@ -2,7 +2,6 @@ package com.moe.twitter.data.remote.interceptor
 
 import okhttp3.Interceptor
 import okhttp3.Response
-import okio.Buffer
 import java.nio.charset.Charset
 
 /**
@@ -15,12 +14,12 @@ class ErrorLoggingInterceptor : Interceptor {
         val response = chain.proceed(request)
 
         if (!response.isSuccessful) {
-            val source = response.body?.source()
-            source?.request(Long.MAX_VALUE)
-            val buffer = source?.buffer
-            val bodyString = buffer?.clone()?.readString(Charset.defaultCharset())
+            val source = response.body.source()
+            source.request(Long.MAX_VALUE)
+            val buffer = source.buffer
+            val bodyString = buffer.clone().readString(Charset.defaultCharset())
             // Use standard logging to avoid extra dependencies; OkHttp will tag it.
-            if (!bodyString.isNullOrBlank()) {
+            if (bodyString.isNotBlank()) {
                 println("HTTP ${response.code} for ${request.method} ${request.url} -> $bodyString")
             }
         }

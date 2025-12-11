@@ -25,15 +25,18 @@ class OAuthManager(
         // Generate PKCE parameters
         val codeVerifier = PKCEGenerator.generateCodeVerifier()
         val codeChallenge = PKCEGenerator.generateCodeChallenge(codeVerifier)
+        val state = generateRandomState()
 
         // Store code verifier for later use during token exchange
         tokenStorage.saveCodeVerifier(codeVerifier)
+        tokenStorage.saveState(state)
 
         // Build authorization URL
         val authUrl = buildAuthorizationUrl(
             clientId = BuildConfig.TWITTER_CLIENT_ID,
             redirectUri = BuildConfig.TWITTER_REDIRECT_URI,
-            codeChallenge = codeChallenge
+            codeChallenge = codeChallenge,
+            state = state
         )
 
         // Launch browser with authorization URL
@@ -51,7 +54,8 @@ class OAuthManager(
     private fun buildAuthorizationUrl(
         clientId: String,
         redirectUri: String,
-        codeChallenge: String
+        codeChallenge: String,
+        state: String
     ): String {
         return Uri.Builder()
             .scheme("https")
@@ -63,7 +67,7 @@ class OAuthManager(
             .appendQueryParameter("client_id", clientId)
             .appendQueryParameter("redirect_uri", redirectUri)
             .appendQueryParameter("scope", "tweet.read tweet.write users.read offline.access")
-            .appendQueryParameter("state", generateRandomState())
+            .appendQueryParameter("state", state)
             .appendQueryParameter("code_challenge", codeChallenge)
             .appendQueryParameter("code_challenge_method", "S256")
             .build()
@@ -84,10 +88,4 @@ class OAuthManager(
         return tokenStorage.getAccessToken() != null
     }
 
-    /**
-     * Logs out the user by clearing all stored tokens.
-     */
-    fun logout() {
-        tokenStorage.clearTokens()
-    }
 }

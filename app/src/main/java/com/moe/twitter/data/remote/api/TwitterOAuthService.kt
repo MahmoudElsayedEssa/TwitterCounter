@@ -1,5 +1,6 @@
 package com.moe.twitter.data.remote.api
 
+import com.moe.twitter.data.remote.model.TokenResponse
 import retrofit2.Response
 import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded
@@ -20,11 +21,3 @@ interface TwitterOAuthService {
         @Field("code_verifier") codeVerifier: String
     ): Response<TokenResponse>
 }
-
-data class TokenResponse(
-    val access_token: String,
-    val token_type: String,
-    val expires_in: Int?,
-    val refresh_token: String?,
-    val scope: String?
-)

@@ -19,7 +19,7 @@ object NetworkErrorMapper {
 
     fun fromResponse(response: Response<PostTweetResponse>): PostTweetResult {
         val errorMessage = response.errorBody()?.string()
-        val fallback = errorMessage?.takeIf { it.isNotBlank() }
+        val fallback = parseDetail(errorMessage) ?: errorMessage?.takeIf { it.isNotBlank() }
         // Twitter duplicate protection returns 403 with a detail message
         if (response.code() == 403 && errorMessage?.contains("duplicate content", ignoreCase = true) == true) {
             return PostTweetResult.Failure("Duplicate tweet: change the text and try again.")
@@ -34,6 +34,12 @@ object NetworkErrorMapper {
             in 500..599 -> PostTweetResult.Failure("Server error (${response.code()}). Please retry.")
             else -> PostTweetResult.Failure(fallback ?: "Unexpected error (${response.code()}).")
         }
+    }
+
+    private fun parseDetail(raw: String?): String? {
+        if (raw.isNullOrBlank()) return null
+        val regex = """"detail"\s*:\s*"([^"]+)"""".toRegex()
+        return regex.find(raw)?.groupValues?.getOrNull(1)
     }
 }
 

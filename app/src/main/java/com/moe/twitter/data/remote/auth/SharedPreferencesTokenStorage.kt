@@ -56,11 +56,29 @@ class SharedPreferencesTokenStorage(context: Context) : TokenStorage {
         return sharedPreferences.getString(KEY_CODE_VERIFIER, null)
     }
 
+    override fun saveState(state: String) {
+        sharedPreferences.edit()
+            .putString(KEY_STATE, state)
+            .apply()
+    }
+
+    override fun getState(): String? {
+        return sharedPreferences.getString(KEY_STATE, null)
+    }
+
+    override fun clearEphemeralAuth() {
+        sharedPreferences.edit()
+            .remove(KEY_CODE_VERIFIER)
+            .remove(KEY_STATE)
+            .apply()
+    }
+
     override fun clearTokens() {
         sharedPreferences.edit()
             .remove(KEY_ACCESS_TOKEN)
             .remove(KEY_REFRESH_TOKEN)
             .remove(KEY_CODE_VERIFIER)
+            .remove(KEY_STATE)
             .apply()
     }
 
@@ -69,5 +87,6 @@ class SharedPreferencesTokenStorage(context: Context) : TokenStorage {
         private const val KEY_ACCESS_TOKEN = "access_token"
         private const val KEY_REFRESH_TOKEN = "refresh_token"
         private const val KEY_CODE_VERIFIER = "code_verifier"
+        private const val KEY_STATE = "oauth_state"
     }
 }
