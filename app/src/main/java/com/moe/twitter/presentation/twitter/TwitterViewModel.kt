@@ -10,11 +10,12 @@ import com.moe.twitter.domain.usecase.CheckTextIssuesUseCase
 import com.moe.twitter.domain.usecase.ComputeTweetMetricsUseCase
 import com.moe.twitter.domain.usecase.PostTweetUseCase
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -26,14 +27,14 @@ class TwitterViewModel(
     private val oauthManager: OAuthManager
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(TwitterState())
+    private val _state = MutableStateFlow<TwitterState>(TwitterState.Content())
     val state = _state.asStateFlow()
 
-    private val _effects = Channel<TwitterEffect>(Channel.BUFFERED)
-    val effects = _effects.receiveAsFlow()
+    private val _effects = MutableSharedFlow<TwitterEffect>(extraBufferCapacity = 4)
+    val effects: SharedFlow<TwitterEffect> = _effects.asSharedFlow()
 
-    private val _ghostEvents = Channel<GhostEvent>(Channel.BUFFERED)
-    val ghostEvents = _ghostEvents.receiveAsFlow()
+    private val _ghostEvents = MutableSharedFlow<GhostEvent>(extraBufferCapacity = 64)
+    val ghostEvents: SharedFlow<GhostEvent> = _ghostEvents.asSharedFlow()
 
     private var checkJob: Job? = null
     private var lastLayout: TextLayoutResult? = null
@@ -42,14 +43,14 @@ class TwitterViewModel(
 
     init {
         val isAuthed = oauthManager.isAuthenticated()
-        _state.update { it.copy(isAuthenticated = isAuthed) }
+        updateContent { it.copy(isAuthenticated = isAuthed) }
         if (!isAuthed) {
             startAuthIfNeeded()
         }
     }
 
     fun refreshAuthState() {
-        _state.update { it.copy(isAuthenticated = oauthManager.isAuthenticated()) }
+        updateContent { it.copy(isAuthenticated = oauthManager.isAuthenticated()) }
     }
 
     fun onAction(action: TwitterAction) {
@@ -67,7 +68,7 @@ class TwitterViewModel(
     private fun handleTextChange(newValue: String) {
         viewModelScope.launch {
 
-            _state.update {
+            updateContent {
                 it.copy(
                     text = newValue,
                     metrics = computeTweetMetricsUseCase(newValue)
@@ -90,7 +91,7 @@ class TwitterViewModel(
     private fun handleClear() {
         viewModelScope.launch {
             val layout = lastLayout
-            val text = _state.value.text
+            val text = (_state.value as TwitterState.Content).text
             if (layout != null && text.isNotEmpty()) {
                 spawnClearAllGhosts(
                     text = text,
@@ -98,7 +99,7 @@ class TwitterViewModel(
                 )
             }
 
-            _state.update {
+            updateContent {
                 it.copy(
                     text = "",
                     metrics = computeTweetMetricsUseCase(""),
@@ -114,42 +115,42 @@ class TwitterViewModel(
 
     private fun handleCopy() {
         viewModelScope.launch {
-            val text = _state.value.text
+            val text = (_state.value as TwitterState.Content).text
             if (text.isEmpty()) {
-                _effects.send(TwitterEffect.ShowToast("Nothing to copy"))
+                _effects.emit(TwitterEffect.ShowToast("Nothing to copy"))
                 return@launch
             }
-            _effects.send(TwitterEffect.CopyToClipboard(text))
-            _effects.send(TwitterEffect.ShowToast("Copied"))
+            _effects.emit(TwitterEffect.CopyToClipboard(text))
+            _effects.emit(TwitterEffect.ShowToast("Copied"))
         }
     }
 
     private fun handlePost() {
         viewModelScope.launch {
-            val current = _state.value.text
+            val current = (_state.value as TwitterState.Content).text
 
             // Validation
             if (current.isBlank()) {
-                _effects.send(TwitterEffect.ShowToast("Cannot post empty text"))
+                _effects.emit(TwitterEffect.ShowToast("Cannot post empty text"))
                 return@launch
             }
-            if (!_state.value.metrics.withinLimit) {
-                _effects.send(TwitterEffect.ShowToast("Text exceeds 280 characters"))
+            if (!(_state.value as TwitterState.Content).metrics.withinLimit) {
+                _effects.emit(TwitterEffect.ShowToast("Text exceeds 280 characters"))
                 return@launch
             }
 
             // Set posting state atomically
-            _state.update { it.copy(postingState = PostingState.Posting) }
+            updateContent { it.copy(postingState = PostingState.Posting) }
 
             val result = postTweetUseCase(current)
             result.fold(
                 onSuccess = {
-                    _state.update { it.copy(postingState = PostingState.Success) }
-                    _effects.send(TwitterEffect.ShowToast("Posted!"))
+                    updateContent { it.copy(postingState = PostingState.Success) }
+                    _effects.emit(TwitterEffect.ShowToast("Posted!"))
 
                     delay(1800)
                     handleClear()
-                    _state.update { it.copy(postingState = PostingState.Idle) }
+                    updateContent { it.copy(postingState = PostingState.Idle) }
                 },
                 onFailure = { error ->
                     val rawMessage = error.message ?: "Post failed"
@@ -158,11 +159,11 @@ class TwitterViewModel(
                     } else {
                         rawMessage
                     }
-                    _state.update { it.copy(postingState = PostingState.Error(displayMessage)) }
-                    _effects.send(TwitterEffect.ShowToast(displayMessage))
+                    updateContent { it.copy(postingState = PostingState.Error(displayMessage)) }
+                    _effects.emit(TwitterEffect.ShowToast(displayMessage))
 
                     delay(2000)
-                    _state.update { it.copy(postingState = PostingState.Idle) }
+                    updateContent { it.copy(postingState = PostingState.Idle) }
                 }
             )
         }
@@ -177,26 +178,18 @@ class TwitterViewModel(
     private fun launchDebouncedCheck(text: String) {
         checkJob?.cancel()
         if (text.isBlank() || text.length < 5) {
-            _state.update { it.copy(errors = emptyList(), isChecking = false) }
+            updateContent { it.copy(errors = emptyList(), isChecking = false) }
             return
         }
 
         checkJob = viewModelScope.launch {
-            _state.update { it.copy(isChecking = true) }
+            updateContent { it.copy(isChecking = true) }
             delay(600)
             if (!isActive) return@launch
 
             val issues = checkTextIssuesUseCase(text).getOrElse { emptyList() }
-            _state.update { it.copy(errors = issues, isChecking = false) }
+            updateContent { it.copy(errors = issues, isChecking = false) }
         }
-    }
-
-    private fun handleLogin() {
-        startAuthIfNeeded()
-    }
-
-    private fun handleLogout() {
-        handleClear()
     }
 
     // ---------------- Ghost seeds (UI animates) ----------------
@@ -239,7 +232,7 @@ class TwitterViewModel(
             order = stepIndex
         )
         viewModelScope.launch {
-            _ghostEvents.send(GhostEvent.Backspace(seed, delayMs = stepIndex * 18L))
+            _ghostEvents.emit(GhostEvent.Backspace(seed, delayMs = stepIndex * 18L))
         }
     }
 
@@ -271,7 +264,15 @@ class TwitterViewModel(
         }
 
         viewModelScope.launch {
-            _ghostEvents.send(GhostEvent.Clear(seeds = seeds, smartDelayMs = smartDelay))
+            _ghostEvents.emit(GhostEvent.Clear(seeds = seeds, smartDelayMs = smartDelay))
+        }
+    }
+
+    private inline fun updateContent(block: (TwitterState.Content) -> TwitterState.Content) {
+        _state.update { state ->
+            when (state) {
+                is TwitterState.Content -> block(state)
+            }
         }
     }
 }

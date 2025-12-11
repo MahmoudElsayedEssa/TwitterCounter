@@ -16,20 +16,32 @@ sealed interface PostingState {
 }
 
 @Immutable
-data class TwitterState(
-    val text: String = "",
-    val maxChars: Int = 280,
-    val metrics: TweetMetrics = TweetMetrics(
-        weightedLength = 0,
-        remaining = 280,
-        withinLimit = true
-    ),
-    val errors: List<TextIssue> = emptyList(),
-    val isChecking: Boolean = false,
-    val postingState: PostingState = PostingState.Idle,
-    val clearSignal: Int = 0,
-    val isAuthenticated: Boolean = false
-)
+sealed interface TwitterState {
+    val text: String
+    val maxChars: Int
+    val metrics: TweetMetrics
+    val errors: List<TextIssue>
+    val isChecking: Boolean
+    val postingState: PostingState
+    val clearSignal: Int
+    val isAuthenticated: Boolean
+
+    @Immutable
+    data class Content(
+        override val text: String = "",
+        override val maxChars: Int = 280,
+        override val metrics: TweetMetrics = TweetMetrics(
+            weightedLength = 0,
+            remaining = 280,
+            withinLimit = true
+        ),
+        override val errors: List<TextIssue> = emptyList(),
+        override val isChecking: Boolean = false,
+        override val postingState: PostingState = PostingState.Idle,
+        override val clearSignal: Int = 0,
+        override val isAuthenticated: Boolean = false
+    ) : TwitterState
+}
 
 interface TwitterAction {
     data class OnTextChange(val value: String) : TwitterAction

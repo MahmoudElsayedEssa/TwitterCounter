@@ -204,8 +204,8 @@ fun PostTweetButton(
 private fun PostTweetButtonIdlePreview() {
     TwitterCounterTheme {
         Surface {
-            PostTweetButton(
-                state = TwitterState(
+    PostTweetButton(
+                state = TwitterState.Content(
                     text = "Hello Twitter!",
                     metrics = TweetMetrics(14, 266, true),
                     postingState = PostingState.Idle
@@ -223,7 +223,7 @@ private fun PostTweetButtonPostingPreview() {
     TwitterCounterTheme {
         Surface {
             PostTweetButton(
-                state = TwitterState(
+                state = TwitterState.Content(
                     text = "Hello Twitter!",
                     metrics = TweetMetrics(14, 266, true),
                     postingState = PostingState.Posting
@@ -241,7 +241,7 @@ private fun PostTweetButtonSuccessPreview() {
     TwitterCounterTheme {
         Surface {
             PostTweetButton(
-                state = TwitterState(
+                state = TwitterState.Content(
                     text = "Hello Twitter!",
                     metrics = TweetMetrics(14, 266, true),
                     postingState = PostingState.Success
@@ -259,7 +259,7 @@ private fun PostTweetButtonErrorPreview() {
     TwitterCounterTheme {
         Surface {
             PostTweetButton(
-                state = TwitterState(
+                state = TwitterState.Content(
                     text = "Hello Twitter!",
                     metrics = TweetMetrics(14, 266, true),
                     postingState = PostingState.Error("Network error")
@@ -277,7 +277,7 @@ private fun PostTweetButtonInvalidEmptyPreview() {
     TwitterCounterTheme {
         Surface {
             PostTweetButton(
-                state = TwitterState(
+                state = TwitterState.Content(
                     text = "",
                     metrics = TweetMetrics(0, 280, true),
                     postingState = PostingState.Idle
@@ -295,7 +295,7 @@ private fun PostTweetButtonInvalidLongPreview() {
     TwitterCounterTheme {
         Surface {
             PostTweetButton(
-                state = TwitterState(
+                state = TwitterState.Content(
                     text = "x".repeat(300),
                     metrics = TweetMetrics(300, -20, false),
                     postingState = PostingState.Idle
