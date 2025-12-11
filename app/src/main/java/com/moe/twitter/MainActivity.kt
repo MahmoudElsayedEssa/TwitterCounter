@@ -62,7 +62,7 @@ class MainActivity : ComponentActivity() {
                     }
                     Log.d("MainActivity", "Received OAuth code: $code")
                     // Clear the intent data to prevent re-processing after recreate()
-                    intent?.data = null
+                    intent.data = null
                     authCallbackHandled = true
                     exchangeCodeForToken(code)
                 }
@@ -109,7 +109,6 @@ class MainActivity : ComponentActivity() {
                 }
             } catch (e: Exception) {
                 Log.e("MainActivity", "Token exchange error", e)
-                // TODO: Show error to user
                 authCallbackHandled = false
             }
         }
