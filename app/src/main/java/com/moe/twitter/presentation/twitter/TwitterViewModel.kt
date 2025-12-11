@@ -97,6 +97,12 @@ class TwitterViewModel(
 
     private fun handleCopy() {
         viewModelScope.launch {
+            val text = _state.value.text
+            if (text.isEmpty()) {
+                _effects.send(TwitterEffect.ShowToast("Nothing to copy"))
+                return@launch
+            }
+            _effects.send(TwitterEffect.CopyToClipboard(text))
             _effects.send(TwitterEffect.ShowToast("Copied"))
         }
     }

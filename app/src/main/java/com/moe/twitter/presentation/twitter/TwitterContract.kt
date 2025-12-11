@@ -54,6 +54,7 @@ sealed interface GhostEvent {
 
 sealed interface TwitterEffect {
     data class ShowToast(val message: String) : TwitterEffect
+    data class CopyToClipboard(val text: String) : TwitterEffect
 }
 
 /**
