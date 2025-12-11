@@ -38,9 +38,14 @@ class TwitterViewModel(
     private var checkJob: Job? = null
     private var lastLayout: TextLayoutResult? = null
     private var previousText: String = ""
+    private var authFlowStarted = false
 
     init {
-        _state.update { it.copy(isAuthenticated = oauthManager.isAuthenticated()) }
+        val isAuthed = oauthManager.isAuthenticated()
+        _state.update { it.copy(isAuthenticated = isAuthed) }
+        if (!isAuthed) {
+            startAuthIfNeeded()
+        }
     }
 
     fun refreshAuthState() {
@@ -54,8 +59,8 @@ class TwitterViewModel(
             is TwitterAction.OnCopy -> handleCopy()
             is TwitterAction.OnPost -> handlePost()
             is TwitterAction.OnTextLayout -> lastLayout = action.layout
-            is TwitterAction.OnLogin -> handleLogin()
-            is TwitterAction.OnLogout -> handleLogout()
+            is TwitterAction.OnLogin -> { /* no-op: auto login handled */ }
+            is TwitterAction.OnLogout -> handleClear()
         }
     }
 
@@ -169,6 +174,12 @@ class TwitterViewModel(
         }
     }
 
+    private fun startAuthIfNeeded() {
+        if (authFlowStarted) return
+        authFlowStarted = true
+        oauthManager.startAuthFlow()
+    }
+
     private fun launchDebouncedCheck(text: String) {
         checkJob?.cancel()
         if (text.isBlank() || text.length < 5) {
@@ -191,12 +202,11 @@ class TwitterViewModel(
     }
 
     private fun handleLogin() {
-        oauthManager.startAuthFlow()
+        startAuthIfNeeded()
     }
 
     private fun handleLogout() {
-        oauthManager.logout()
-        _state.update { it.copy(isAuthenticated = false) }
+        handleClear()
     }
 
     // ---------------- Ghost seeds (UI animates) ----------------
