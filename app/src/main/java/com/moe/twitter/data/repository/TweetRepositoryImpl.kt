@@ -3,7 +3,7 @@ package com.moe.twitter.data.repository
 import com.moe.twitter.data.remote.NetworkErrorMapper
 import com.moe.twitter.data.remote.api.TwitterApiService
 import com.moe.twitter.data.remote.model.PostTweetRequest
-import com.moe.twitter.domain.model.PostTweetResult
+import com.moe.twitter.domain.model.TweetPublishException
 import com.moe.twitter.domain.model.TweetMetrics
 import com.moe.twitter.domain.repository.TweetRepository
 import com.twitter.twittertext.TwitterTextParser
@@ -18,19 +18,17 @@ class TweetRepositoryImpl(
     override suspend fun calculateMetrics(text: String, maxCharacters: Int): TweetMetrics {
         val parsed = TwitterTextParser.parseTweet(text)
         val weighted = parsed.weightedLength
-        val remaining = maxCharacters - weighted
-        val withinLimit = weighted <= maxCharacters
         return TweetMetrics(
             weightedLength = weighted,
-            remaining = remaining,
-            withinLimit = withinLimit
+            remaining = maxCharacters - weighted,
+            withinLimit = weighted <= maxCharacters
         )
 
     }
 
-    override suspend fun publish(text: String): PostTweetResult = withContext(ioDispatcher) {
+    override suspend fun publish(text: String): Result<Unit> = withContext(ioDispatcher) {
         if (text.isBlank()) {
-            return@withContext PostTweetResult.Failure("Cannot publish an empty tweet.")
+            return@withContext Result.failure(TweetPublishException("Cannot publish an empty tweet."))
         }
 
         try {
@@ -41,12 +39,12 @@ class TweetRepositoryImpl(
 
             val body = response.body()
             when {
-                body?.data != null -> PostTweetResult.Success
-                body == null -> PostTweetResult.Failure("Empty response from server.")
-                else -> PostTweetResult.Failure("Unexpected response from server.")
+                body?.data != null -> Result.success(Unit)
+                body == null -> Result.failure(TweetPublishException("Empty response from server."))
+                else -> Result.failure(TweetPublishException("Unexpected response from server."))
             }
         } catch (e: Exception) {
-            NetworkErrorMapper.fromException(e)
+            return@withContext NetworkErrorMapper.fromException(e)
         }
     }
 

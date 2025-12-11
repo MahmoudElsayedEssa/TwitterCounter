@@ -16,32 +16,34 @@ class TextCheckRepositoryImpl(
     override suspend fun checkTextIssues(
         text: String,
         language: String
-    ): List<TextIssue> = withContext(ioDispatcher) {
-        if (text.isBlank()) return@withContext emptyList()
+    ): Result<List<TextIssue>> = withContext(ioDispatcher) {
+        if (text.isBlank()) return@withContext Result.success(emptyList())
 
         try {
-            languageToolApi.checkText(
-                text = text,
-                language = language
-            ).matches.mapNotNull { match ->
-                val offset = match.offset ?: return@mapNotNull null
-                val length = match.length ?: return@mapNotNull null
+            Result.success(
+                languageToolApi.checkText(
+                    text = text,
+                    language = language
+                ).matches.mapNotNull { match ->
+                    val offset = match.offset ?: return@mapNotNull null
+                    val length = match.length ?: return@mapNotNull null
 
-                val start = offset.coerceIn(0, text.length)
-                val end = (offset + length).coerceIn(start, text.length)
-                if (start >= end) return@mapNotNull null
+                    val start = offset.coerceIn(0, text.length)
+                    val end = (offset + length).coerceIn(start, text.length)
+                    if (start >= end) return@mapNotNull null
 
-                TextIssue(
-                    start = start,
-                    end = end,
-                    message = match.message,
-                    issueType = match.rule?.issueType,
-                    ruleId = match.rule?.id
-                )
-            }
+                    TextIssue(
+                        start = start,
+                        end = end,
+                        message = match.message,
+                        issueType = match.rule?.issueType,
+                        ruleId = match.rule?.id
+                    )
+                }
+            )
         } catch (e: Exception) {
             Log.e("TextCheckRepository", "Failed to check text issues", e)
-            emptyList()
+            Result.failure(e)
         }
     }
 }

@@ -5,7 +5,7 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.moe.twitter.data.remote.auth.OAuthManager
-import com.moe.twitter.domain.model.PostTweetResult
+import com.moe.twitter.domain.model.TweetPublishException
 import com.moe.twitter.domain.usecase.CheckTextIssuesUseCase
 import com.moe.twitter.domain.usecase.ComputeTweetMetricsUseCase
 import com.moe.twitter.domain.usecase.PostTweetUseCase
@@ -141,36 +141,30 @@ class TwitterViewModel(
             // Set posting state atomically
             _state.update { it.copy(postingState = PostingState.Posting) }
 
-            when (val result = postTweetUseCase(current)) {
-                PostTweetResult.Success -> {
-                    // Update to success state atomically
+            val result = postTweetUseCase(current)
+            result.fold(
+                onSuccess = {
                     _state.update { it.copy(postingState = PostingState.Success) }
                     _effects.send(TwitterEffect.ShowToast("Posted!"))
 
-                    // Wait for animation, then reset
                     delay(1800)
                     handleClear()
                     _state.update { it.copy(postingState = PostingState.Idle) }
-                }
+                },
+                onFailure = { error ->
+                    val rawMessage = error.message ?: "Post failed"
+                    val displayMessage = if (error is TweetPublishException && rawMessage.equals("No client available", ignoreCase = true)) {
+                        "NO CLIENT!"
+                    } else {
+                        rawMessage
+                    }
+                    _state.update { it.copy(postingState = PostingState.Error(displayMessage)) }
+                    _effects.send(TwitterEffect.ShowToast(displayMessage))
 
-                PostTweetResult.NoClientAvailable -> {
-                    _state.update { it.copy(postingState = PostingState.Error("No client available")) }
-                    _effects.send(TwitterEffect.ShowToast("NO CLIENT!"))
-                    delay(1500)
-                    _state.update { it.copy(postingState = PostingState.Idle) }
-                }
-
-                is PostTweetResult.Failure -> {
-                    val errorMsg = result.message ?: "Post failed"
-                    // Update to error state atomically
-                    _state.update { it.copy(postingState = PostingState.Error(errorMsg)) }
-                    _effects.send(TwitterEffect.ShowToast(errorMsg))
-
-                    // Reset to idle after error display
                     delay(2000)
                     _state.update { it.copy(postingState = PostingState.Idle) }
                 }
-            }
+            )
         }
     }
 
@@ -192,12 +186,8 @@ class TwitterViewModel(
             delay(600)
             if (!isActive) return@launch
 
-            val result = try {
-                checkTextIssuesUseCase(text)
-            } catch (_: Exception) {
-                emptyList()
-            }
-            _state.update { it.copy(errors = result, isChecking = false) }
+            val issues = checkTextIssuesUseCase(text).getOrElse { emptyList() }
+            _state.update { it.copy(errors = issues, isChecking = false) }
         }
     }
 
