@@ -21,20 +21,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.moe.twitter.domain.model.TweetMetrics
 import com.moe.twitter.presentation.twitter.components.DissolveTextArea
-import com.moe.twitter.ui.theme.TwitterCounterTheme
-import com.moe.twitter.ui.theme.twitterColors
-import kotlinx.coroutines.flow.MutableStateFlow
 import com.moe.twitter.presentation.twitter.components.PostTweetButton
 import com.moe.twitter.presentation.twitter.components.StatCard
 import com.moe.twitter.presentation.twitter.components.TwitterActionButton
 import com.moe.twitter.presentation.twitter.components.TwitterLogo
 import com.moe.twitter.presentation.twitter.components.TwitterTopBar
+import com.moe.twitter.ui.theme.TwitterCounterTheme
+import com.moe.twitter.ui.theme.twitterColors
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 
 @Composable
 fun TwitterScreen(
