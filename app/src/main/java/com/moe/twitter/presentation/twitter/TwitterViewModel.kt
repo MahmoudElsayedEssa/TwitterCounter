@@ -4,6 +4,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.moe.twitter.data.remote.auth.OAuthManager
 import com.moe.twitter.domain.model.PostTweetResult
 import com.moe.twitter.domain.usecase.CheckTextIssuesUseCase
 import com.moe.twitter.domain.usecase.ComputeTweetMetricsUseCase
@@ -21,7 +22,8 @@ import kotlinx.coroutines.launch
 class TwitterViewModel(
     private val postTweetUseCase: PostTweetUseCase,
     private val checkTextIssuesUseCase: CheckTextIssuesUseCase,
-    private val computeTweetMetricsUseCase: ComputeTweetMetricsUseCase
+    private val computeTweetMetricsUseCase: ComputeTweetMetricsUseCase,
+    private val oauthManager: OAuthManager
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(TwitterState())
@@ -37,6 +39,14 @@ class TwitterViewModel(
     private var lastLayout: TextLayoutResult? = null
     private var previousText: String = ""
 
+    init {
+        _state.update { it.copy(isAuthenticated = oauthManager.isAuthenticated()) }
+    }
+
+    fun refreshAuthState() {
+        _state.update { it.copy(isAuthenticated = oauthManager.isAuthenticated()) }
+    }
+
     fun onAction(action: TwitterAction) {
         when (action) {
             is TwitterAction.OnTextChange -> handleTextChange(action.value)
@@ -44,6 +54,8 @@ class TwitterViewModel(
             is TwitterAction.OnCopy -> handleCopy()
             is TwitterAction.OnPost -> handlePost()
             is TwitterAction.OnTextLayout -> lastLayout = action.layout
+            is TwitterAction.OnLogin -> handleLogin()
+            is TwitterAction.OnLogout -> handleLogout()
         }
     }
 
@@ -176,6 +188,15 @@ class TwitterViewModel(
             }
             _state.update { it.copy(errors = result, isChecking = false) }
         }
+    }
+
+    private fun handleLogin() {
+        oauthManager.startAuthFlow()
+    }
+
+    private fun handleLogout() {
+        oauthManager.logout()
+        _state.update { it.copy(isAuthenticated = false) }
     }
 
     // ---------------- Ghost seeds (UI animates) ----------------

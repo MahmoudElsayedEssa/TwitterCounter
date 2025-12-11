@@ -20,6 +20,10 @@ object NetworkErrorMapper {
     fun fromResponse(response: Response<PostTweetResponse>): PostTweetResult {
         val errorMessage = response.errorBody()?.string()
         val fallback = errorMessage?.takeIf { it.isNotBlank() }
+        // Twitter duplicate protection returns 403 with a detail message
+        if (response.code() == 403 && errorMessage?.contains("duplicate content", ignoreCase = true) == true) {
+            return PostTweetResult.Failure("Duplicate tweet: change the text and try again.")
+        }
 
         return when (response.code()) {
             400 -> PostTweetResult.Failure(fallback ?: "Bad request.")

@@ -25,6 +25,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.moe.twitter.domain.model.TweetMetrics
 import com.moe.twitter.presentation.twitter.components.DissolveTextArea
+import com.moe.twitter.presentation.twitter.components.LoginPrompt
 import com.moe.twitter.presentation.twitter.components.PostTweetButton
 import com.moe.twitter.presentation.twitter.components.StatCard
 import com.moe.twitter.presentation.twitter.components.TwitterActionButton
@@ -108,32 +109,37 @@ fun TwitterScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                TwitterActionButton(
-                    text = "Copy Text",
-                    background = MaterialTheme.twitterColors.SuccessGreen,
-                    onClick = { onActionState(TwitterAction.OnCopy) },
+            if (!state.isAuthenticated) {
+                LoginPrompt(
+                    onLoginClick = { onActionState(TwitterAction.OnLogin) },
+                    modifier = Modifier.fillMaxWidth()
                 )
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    TwitterActionButton(
+                        text = "Copy Text",
+                        background = MaterialTheme.twitterColors.SuccessGreen,
+                        onClick = { onActionState(TwitterAction.OnCopy) }
+                    )
 
+                    TwitterActionButton(
+                        text = "Logout",
+                        background = MaterialTheme.twitterColors.ErrorRed,
+                        onClick = { onActionState(TwitterAction.OnLogout) }
+                    )
+                }
 
-                TwitterActionButton(
-                    text = "Clear Text",
-                    background = MaterialTheme.twitterColors.ErrorRed,
-                    onClick = { onActionState(TwitterAction.OnClear) },
+                Spacer(modifier = Modifier.height(18.dp))
+
+                PostTweetButton(
+                    state = state,
+                    onPost = { onActionState(TwitterAction.OnPost) },
+                    modifier = Modifier
                 )
             }
-
-            Spacer(modifier = Modifier.height(18.dp))
-
-            PostTweetButton(
-                state = state,
-                onPost = { onActionState(TwitterAction.OnPost) },
-                modifier = Modifier
-            )
         }
     }
 }

@@ -1,6 +1,9 @@
 *.iml
 .gradle
+local.properties
 /local.properties
+
+# IntelliJ / Android Studio
 /.idea/caches
 /.idea/libraries
 /.idea/modules.xml
@@ -8,8 +11,26 @@
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
 .DS_Store
+
+# Build outputs (all modules)
 /build
-/captures
+**/build/
+**/bin/
+**/out/
+
+# Compiled artifacts
+**/*.dex
+**/*.class
+**/*.apk
+**/*.ap_
+**/*.aab
+
+# Native / external builds
 .externalNativeBuild
 .cxx
-local.properties
+
+# Captures / misc
+/captures
+
+# Navigation temp
+navigation.json

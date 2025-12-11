@@ -41,9 +41,9 @@ class TweetRepositoryImpl(
 
             val body = response.body()
             when {
-                body?.success == true -> PostTweetResult.Success
+                body?.data != null -> PostTweetResult.Success
                 body == null -> PostTweetResult.Failure("Empty response from server.")
-                else -> PostTweetResult.Failure(body.message)
+                else -> PostTweetResult.Failure("Unexpected response from server.")
             }
         } catch (e: Exception) {
             NetworkErrorMapper.fromException(e)

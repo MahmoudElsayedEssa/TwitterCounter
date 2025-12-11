@@ -5,7 +5,14 @@ import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
 val presentationModule = module {
-    viewModel { TwitterViewModel(get(), get(), get()) }
+    viewModel {
+        TwitterViewModel(
+            postTweetUseCase = get(),
+            checkTextIssuesUseCase = get(),
+            computeTweetMetricsUseCase = get(),
+            oauthManager = get()
+        )
+    }
 }
 
 

@@ -28,6 +28,7 @@ data class TwitterState(
     val isChecking: Boolean = false,
     val postingState: PostingState = PostingState.Idle,
     val clearSignal: Int = 0,
+    val isAuthenticated: Boolean = false
 )
 
 interface TwitterAction {
@@ -36,6 +37,8 @@ interface TwitterAction {
     data object OnCopy : TwitterAction
     data object OnPost : TwitterAction
     data class OnTextLayout(val layout: TextLayoutResult) : TwitterAction
+    data object OnLogin : TwitterAction
+    data object OnLogout : TwitterAction
 }
 
 @Immutable
