@@ -39,4 +39,11 @@ fun TwitterRoute() {
     )
 }
 
+// TwitterRoute is not previewable as it requires:
+// - Koin ViewModel injection
+// - Real ClipboardManager from Android context
+// - Real Toast functionality
+//
+// To preview this screen, use TwitterScreen directly with mock state (see TwitterScreen.kt previews)
+
 

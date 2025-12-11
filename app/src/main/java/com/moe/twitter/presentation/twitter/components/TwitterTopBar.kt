@@ -12,9 +12,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.moe.twitter.ui.theme.TwitterCounterTheme
+import com.moe.twitter.ui.theme.twitterColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,7 +32,7 @@ fun TwitterTopBar(
                 style = TextStyle(
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF111827)
+                    color = MaterialTheme.twitterColors.TextPrimary
                 )
             )
         },
@@ -38,15 +41,26 @@ fun TwitterTopBar(
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = null,
-                    tint = Color(0xFF7B8794)
+                    tint = MaterialTheme.twitterColors.IconGray
                 )
             }
         },
         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-            containerColor = Color.White,
+            containerColor = MaterialTheme.twitterColors.Surface,
             titleContentColor = MaterialTheme.colorScheme.onBackground
         )
     )
+}
+
+@Preview(name = "Top Bar")
+@Composable
+private fun TwitterTopBarPreview() {
+    TwitterCounterTheme {
+        TwitterTopBar(
+            title = "Twitter character count",
+            onArrowClick = {}
+        )
+    }
 }
 
 

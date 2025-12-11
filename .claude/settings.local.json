@@ -4,7 +4,11 @@
       "Bash(dir:*)",
       "Bash(.gradlew.bat assembleDebug:*)",
       "Bash(Select-Object -First 100)",
-      "Bash(./gradlew.bat assembleDebug:*)"
+      "Bash(./gradlew.bat assembleDebug:*)",
+      "Bash(findstr:*)",
+      "Bash(find:*)",
+      "Bash(gradlew.bat assembleDebug:*)",
+      "Bash(cmd.exe /c \"gradlew.bat assembleDebug\")"
     ]
   }
 }

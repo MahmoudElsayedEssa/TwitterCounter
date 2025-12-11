@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -37,6 +38,7 @@ import com.moe.twitter.presentation.twitter.GhostCharUi
 import com.moe.twitter.presentation.twitter.GhostEvent
 import com.moe.twitter.presentation.twitter.GhostSeed
 import com.moe.twitter.presentation.twitter.TwitterState
+import com.moe.twitter.ui.theme.twitterColors
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -54,6 +56,8 @@ fun DissolveTextArea(
     ghostEvents: Flow<GhostEvent>,
     modifier: Modifier = Modifier
 ) {
+
+    val twitterColor = MaterialTheme.twitterColors
     val overflowAndErrorsTransform = remember(state.text, state.errors, state.maxChars) {
         VisualTransformation { original: AnnotatedString ->
             val styled = AnnotatedString.Builder().apply {
@@ -62,7 +66,7 @@ fun DissolveTextArea(
                 if (original.text.length > state.maxChars) {
                     addStyle(
                         style = SpanStyle(
-                            background = Color(0x33E0245E), color = Color(0xFFE0245E)
+                            background = twitterColor.ErrorBackground, color = twitterColor.TwitterRed
                         ), start = state.maxChars, end = original.length
                     )
                 }
@@ -73,9 +77,9 @@ fun DissolveTextArea(
                     if (safeStart >= safeEnd) return@forEach
 
                     val color = when (err.issueType) {
-                        "grammar", "typographical" -> Color(0xFFE0245E)
-                        "style" -> Color(0xFFE0A400)
-                        else -> Color(0xFFE0245E)
+                        "grammar", "typographical" -> twitterColor.TwitterRed
+                        "style" -> twitterColor.WarningYellow
+                        else -> twitterColor.TwitterRed
                     }
 
                     addStyle(
@@ -122,7 +126,7 @@ fun DissolveTextArea(
     val shadowColor = Color(red = 6, green = 26, blue = 64, alpha = (0.4f * 255).toInt())
     Box(
         modifier = modifier
-            .background(Color.White, RoundedCornerShape(12.dp))
+            .background(MaterialTheme.twitterColors.Surface, RoundedCornerShape(12.dp))
             .shadow(
                 elevation = 24.dp,              // big, soft-ish
                 shape = RoundedCornerShape(12.dp),
@@ -130,9 +134,9 @@ fun DissolveTextArea(
                 ambientColor = shadowColor,
                 spotColor = shadowColor
             )
-            .background(Color.White, RoundedCornerShape(12.dp)) // then the white card
+            .background(MaterialTheme.twitterColors.Surface, RoundedCornerShape(12.dp)) // then the white card
             .border(
-                width = 1.dp, color = Color(0xFFEDEDED), shape = RoundedCornerShape(12.dp)
+                width = 1.dp, color = MaterialTheme.twitterColors.BorderGray, shape = RoundedCornerShape(12.dp)
             )
             .padding(16.dp)
     ) {
@@ -143,9 +147,9 @@ fun DissolveTextArea(
                 .fillMaxWidth()
                 .height(188.dp),
             textStyle = TextStyle(
-                fontSize = 16.sp, color = Color(0xFF14171A), lineHeight = 24.sp
+                fontSize = 16.sp, color = MaterialTheme.twitterColors.TextDark, lineHeight = 24.sp
             ),
-            cursorBrush = SolidColor(Color(0xFF1DA1F2)),
+            cursorBrush = SolidColor(MaterialTheme.twitterColors.TwitterBlue),
             visualTransformation = overflowAndErrorsTransform,
             onTextLayout = onTextLayout
         )
@@ -155,7 +159,7 @@ fun DissolveTextArea(
                 text = "Start typing! You can enter up to 280 characters",
                 fontSize = 14.sp,
                 lineHeight = 22.sp,
-                color = Color(0xFF5E6160)
+                color = MaterialTheme.twitterColors.TextSecondary
             )
 
         }

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -21,8 +22,13 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.moe.twitter.domain.model.TweetMetrics
 import com.moe.twitter.presentation.twitter.components.DissolveTextArea
+import com.moe.twitter.ui.theme.TwitterCounterTheme
+import com.moe.twitter.ui.theme.twitterColors
+import kotlinx.coroutines.flow.MutableStateFlow
 import com.moe.twitter.presentation.twitter.components.PostTweetButton
 import com.moe.twitter.presentation.twitter.components.StatCard
 import com.moe.twitter.presentation.twitter.components.TwitterActionButton
@@ -42,7 +48,7 @@ fun TwitterScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = Color.White,
+        containerColor = MaterialTheme.twitterColors.Surface,
         topBar = {
             TwitterTopBar(
                 title = "Twitter character count",
@@ -110,14 +116,14 @@ fun TwitterScreen(
             ) {
                 TwitterActionButton(
                     text = "Copy Text",
-                    background = Color(0xFF27AE60),
+                    background = MaterialTheme.twitterColors.SuccessGreen,
                     onClick = { onActionState(TwitterAction.OnCopy) },
                 )
 
 
                 TwitterActionButton(
                     text = "Clear Text",
-                    background = Color(0xFFE63946),
+                    background = MaterialTheme.twitterColors.ErrorRed,
                     onClick = { onActionState(TwitterAction.OnClear) },
                 )
             }
@@ -130,5 +136,37 @@ fun TwitterScreen(
                 modifier = Modifier
             )
         }
+    }
+}
+
+@Preview(name = "Twitter Screen - Empty", showBackground = true, heightDp = 800)
+@Composable
+private fun TwitterScreenEmptyPreview() {
+    TwitterCounterTheme {
+        TwitterScreen(
+            state = TwitterState(
+                text = "",
+                metrics = TweetMetrics(0, 280, true),
+                postingState = PostingState.Idle
+            ),
+            ghostEvents = MutableStateFlow<GhostEvent>(GhostEvent.Clear(emptyList(), 0)),
+            onAction = {}
+        )
+    }
+}
+
+@Preview(name = "Twitter Screen - With Text", showBackground = true, heightDp = 800)
+@Composable
+private fun TwitterScreenWithTextPreview() {
+    TwitterCounterTheme {
+        TwitterScreen(
+            state = TwitterState(
+                text = "Hello Twitter! This is a sample tweet.",
+                metrics = TweetMetrics(39, 241, true),
+                postingState = PostingState.Idle
+            ),
+            ghostEvents = MutableStateFlow<GhostEvent>(GhostEvent.Clear(emptyList(), 0)),
+            onAction = {}
+        )
     }
 }

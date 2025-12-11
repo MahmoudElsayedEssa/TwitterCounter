@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -22,6 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,12 +34,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.moe.twitter.domain.model.TweetMetrics
 import com.moe.twitter.presentation.twitter.PostingState
 import com.moe.twitter.presentation.twitter.TwitterState
 import com.moe.twitter.presentation.twitter.components.morph.MorphConfig
 import com.moe.twitter.presentation.twitter.components.morph.TextTransition
+import com.moe.twitter.ui.theme.TwitterCounterTheme
+import com.moe.twitter.ui.theme.twitterColors
 import kotlinx.coroutines.delay
 
 @Composable
@@ -61,23 +67,32 @@ fun PostTweetButton(
     }
 
     // Derive button appearance from robust state (single source of truth)
-    val buttonText = when {
-        showInvalidFeedback -> if (state.text.isBlank()) "Enter some text" else "Text too long"
-        else -> when (state.postingState) {
-            PostingState.Idle -> "Post tweet"
-            PostingState.Posting -> "Posting..."
-            PostingState.Success -> "Posted!"
-            is PostingState.Error -> "Failed"
+    // Using derivedStateOf to optimize recomposition
+    val buttonText by remember {
+        derivedStateOf {
+            when {
+                showInvalidFeedback -> if (state.text.isBlank()) "Enter some text" else "Text too long"
+                else -> when (state.postingState) {
+                    PostingState.Idle -> "Post tweet"
+                    PostingState.Posting -> "Posting..."
+                    PostingState.Success -> "Posted!"
+                    is PostingState.Error -> "Failed"
+                }
+            }
         }
     }
-
-    val buttonColor = when {
-        showInvalidFeedback -> Color(0xFFE63946) // Red for invalid
-        else -> when (state.postingState) {
-            PostingState.Idle -> Color(0xFF1DA1F2) // Twitter blue
-            PostingState.Posting -> Color(0xFF1DA1F2) // Twitter blue
-            PostingState.Success -> Color(0xFF17BF63) // Green
-            is PostingState.Error -> Color(0xFFE63946) // Red
+    val twitterColor = MaterialTheme.twitterColors
+    val buttonColor by remember {
+        derivedStateOf {
+            when {
+                showInvalidFeedback -> twitterColor.ErrorRed
+                else -> when (state.postingState) {
+                    PostingState.Idle -> twitterColor.TwitterBlue
+                    PostingState.Posting -> twitterColor.TwitterBlue
+                    PostingState.Success -> twitterColor.BrightGreen
+                    is PostingState.Error -> twitterColor.ErrorRed
+                }
+            }
         }
     }
 
@@ -87,7 +102,9 @@ fun PostTweetButton(
         else -> null
     }
 
-    val showSpinner = state.postingState == PostingState.Posting
+    val showSpinner by remember {
+        derivedStateOf { state.postingState == PostingState.Posting }
+    }
 
     // Smooth animated scale based on state
     val scale by animateFloatAsState(
@@ -111,7 +128,7 @@ fun PostTweetButton(
         label = "button_color"
     )
 
-    val contentColor = Color.White
+    val contentColor = MaterialTheme.twitterColors.Surface
 
     // Button is clickable only when idle and valid
     val isClickable = state.postingState == PostingState.Idle && !isInvalid
@@ -179,6 +196,114 @@ fun PostTweetButton(
                     )
                 )
             }
+        }
+    }
+}
+
+@Preview(name = "Post Button - Idle")
+@Composable
+private fun PostTweetButtonIdlePreview() {
+    TwitterCounterTheme {
+        Surface {
+            PostTweetButton(
+                state = TwitterState(
+                    text = "Hello Twitter!",
+                    metrics = TweetMetrics(14, 266, true),
+                    postingState = PostingState.Idle
+                ),
+                onPost = {},
+                modifier = Modifier.padding(16.dp)
+            )
+        }
+    }
+}
+
+@Preview(name = "Post Button - Posting")
+@Composable
+private fun PostTweetButtonPostingPreview() {
+    TwitterCounterTheme {
+        Surface {
+            PostTweetButton(
+                state = TwitterState(
+                    text = "Hello Twitter!",
+                    metrics = TweetMetrics(14, 266, true),
+                    postingState = PostingState.Posting
+                ),
+                onPost = {},
+                modifier = Modifier.padding(16.dp)
+            )
+        }
+    }
+}
+
+@Preview(name = "Post Button - Success")
+@Composable
+private fun PostTweetButtonSuccessPreview() {
+    TwitterCounterTheme {
+        Surface {
+            PostTweetButton(
+                state = TwitterState(
+                    text = "Hello Twitter!",
+                    metrics = TweetMetrics(14, 266, true),
+                    postingState = PostingState.Success
+                ),
+                onPost = {},
+                modifier = Modifier.padding(16.dp)
+            )
+        }
+    }
+}
+
+@Preview(name = "Post Button - Error")
+@Composable
+private fun PostTweetButtonErrorPreview() {
+    TwitterCounterTheme {
+        Surface {
+            PostTweetButton(
+                state = TwitterState(
+                    text = "Hello Twitter!",
+                    metrics = TweetMetrics(14, 266, true),
+                    postingState = PostingState.Error("Network error")
+                ),
+                onPost = {},
+                modifier = Modifier.padding(16.dp)
+            )
+        }
+    }
+}
+
+@Preview(name = "Post Button - Invalid (Empty)")
+@Composable
+private fun PostTweetButtonInvalidEmptyPreview() {
+    TwitterCounterTheme {
+        Surface {
+            PostTweetButton(
+                state = TwitterState(
+                    text = "",
+                    metrics = TweetMetrics(0, 280, true),
+                    postingState = PostingState.Idle
+                ),
+                onPost = {},
+                modifier = Modifier.padding(16.dp)
+            )
+        }
+    }
+}
+
+@Preview(name = "Post Button - Invalid (Too Long)")
+@Composable
+private fun PostTweetButtonInvalidLongPreview() {
+    TwitterCounterTheme {
+        Surface {
+            PostTweetButton(
+                state = TwitterState(
+                    text = "x".repeat(300),
+                    metrics = TweetMetrics(300, -20, false),
+                    postingState = PostingState.Idle
+                ),
+                onPost = {},
+                modifier = Modifier.padding(16.dp)
+            )
         }
     }
 }

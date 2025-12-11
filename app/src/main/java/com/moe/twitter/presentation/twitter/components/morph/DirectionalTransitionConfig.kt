@@ -2,6 +2,7 @@ package com.moe.twitter.presentation.twitter.components.morph
 
 import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -20,6 +21,7 @@ import androidx.compose.ui.unit.dp
  * @param bunching Power factor for trail bunching (higher = more bunched).
  * @param easingCurve Easing curve for the animation.
  */
+@Immutable
 data class DirectionalTransitionConfig(
     val transitionDuration: Int = 600,
     val staggerDelay: Long = 40,

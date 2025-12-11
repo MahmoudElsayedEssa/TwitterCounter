@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,8 +35,12 @@ import androidx.compose.ui.draw.BlurredEdgeTreatment
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.moe.twitter.ui.theme.TwitterCounterTheme
+import com.moe.twitter.ui.theme.twitterColors
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -278,4 +284,55 @@ private enum class Direction {
     Up,
     Down,
     None
+}
+
+@Preview(name = "Animated Number - Single Digit")
+@Composable
+private fun AnimatedNumberSinglePreview() {
+    TwitterCounterTheme {
+        Surface {
+            AnimatedNumber(
+                value = "5",
+                style = TextStyle(
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.twitterColors.TextPrimary
+                )
+            )
+        }
+    }
+}
+
+@Preview(name = "Animated Number - Multiple Digits")
+@Composable
+private fun AnimatedNumberMultiplePreview() {
+    TwitterCounterTheme {
+        Surface {
+            AnimatedNumber(
+                value = "280",
+                style = TextStyle(
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.twitterColors.TextPrimary
+                )
+            )
+        }
+    }
+}
+
+@Preview(name = "Animated Number - Negative")
+@Composable
+private fun AnimatedNumberNegativePreview() {
+    TwitterCounterTheme {
+        Surface {
+            AnimatedNumber(
+                value = "-15",
+                style = TextStyle(
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.twitterColors.TwitterRed
+                )
+            )
+        }
+    }
 }
