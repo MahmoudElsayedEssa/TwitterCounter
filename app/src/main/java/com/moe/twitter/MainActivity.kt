@@ -10,7 +10,7 @@ import androidx.lifecycle.lifecycleScope
 import com.moe.twitter.data.remote.api.TwitterOAuthService
 import com.moe.twitter.data.remote.auth.TokenStorage
 import com.moe.twitter.ui.theme.TwitterCounterTheme
-import com.moe.twitter.presentation.twitter.TwitterRoute
+import com.moe.twitter.presentation.twitter.TwitterScreen
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 
@@ -29,7 +29,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             TwitterCounterTheme {
-                TwitterRoute()
+                TwitterScreen()
             }
         }
     }

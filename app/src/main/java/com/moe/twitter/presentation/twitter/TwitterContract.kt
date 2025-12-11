@@ -1,9 +1,10 @@
 package com.moe.twitter.presentation.twitter
 
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.Stable
 import com.moe.twitter.domain.model.TextIssue
 import com.moe.twitter.domain.model.TweetMetrics
-
+@Stable
 sealed interface PostingState {
     data object Idle : PostingState
     data object Posting : PostingState
