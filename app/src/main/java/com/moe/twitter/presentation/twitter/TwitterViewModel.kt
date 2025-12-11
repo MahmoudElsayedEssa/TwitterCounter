@@ -3,6 +3,8 @@ package com.moe.twitter.presentation.twitter
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.moe.twitter.data.remote.auth.OAuthManager
+import com.moe.twitter.domain.TwitterConstants
+import com.moe.twitter.domain.model.TweetMetrics
 import com.moe.twitter.domain.model.TweetPublishException
 import com.moe.twitter.domain.usecase.CheckTextIssuesUseCase
 import com.moe.twitter.domain.usecase.ComputeTweetMetricsUseCase
@@ -25,6 +27,13 @@ class TwitterViewModel(
     private val computeTweetMetricsUseCase: ComputeTweetMetricsUseCase,
     private val oauthManager: OAuthManager
 ) : ViewModel() {
+
+    companion object {
+        private const val TEXT_VALIDATION_DEBOUNCE_MS = 600L
+        private const val MIN_TEXT_LENGTH_FOR_CHECK = 5
+        private const val POST_SUCCESS_DELAY_MS = 1800L
+        private const val POST_ERROR_DELAY_MS = 2000L
+    }
 
     private val _state = MutableStateFlow(TwitterState(
         isAuthenticated = oauthManager.isAuthenticated()
@@ -67,16 +76,17 @@ class TwitterViewModel(
     }
 
     private fun handleClear() {
-        viewModelScope.launch {
-            val metrics = computeTweetMetricsUseCase("")
-            _state.update {
-                it.copy(
-                    text = "",
-                    metrics = metrics,
-                    errors = emptyList(),
-                    isChecking = false
-                )
-            }
+        _state.update {
+            it.copy(
+                text = "",
+                metrics = TweetMetrics(
+                    weightedLength = 0,
+                    remaining = TwitterConstants.MAX_TWEET_CHARS,
+                    withinLimit = true
+                ),
+                errors = emptyList(),
+                isChecking = false
+            )
         }
     }
 
@@ -114,7 +124,7 @@ class TwitterViewModel(
                 onSuccess = {
                     _state.update { it.copy(postingState = PostingState.Success) }
                     _effects.emit(TwitterEffect.ShowToast("Posted!"))
-                    delay(1800)
+                    delay(POST_SUCCESS_DELAY_MS)
                     handleClear()
                     _state.update { it.copy(postingState = PostingState.Idle) }
                 },
@@ -126,7 +136,7 @@ class TwitterViewModel(
                     }
                     _state.update { it.copy(postingState = PostingState.Error(message)) }
                     _effects.emit(TwitterEffect.ShowToast(message))
-                    delay(2000)
+                    delay(POST_ERROR_DELAY_MS)
                     _state.update { it.copy(postingState = PostingState.Idle) }
                 }
             )
@@ -136,9 +146,9 @@ class TwitterViewModel(
     private fun observeTextValidation() {
         viewModelScope.launch {
             textInput
-                .debounce(600)
+                .debounce(TEXT_VALIDATION_DEBOUNCE_MS)
                 .collectLatest { text ->
-                    if (text.length >= 5) {
+                    if (text.length >= MIN_TEXT_LENGTH_FOR_CHECK) {
                         _state.update { it.copy(isChecking = true) }
                         val issues = checkTextIssuesUseCase(text).getOrElse { emptyList() }
                         _state.update { it.copy(errors = issues, isChecking = false) }

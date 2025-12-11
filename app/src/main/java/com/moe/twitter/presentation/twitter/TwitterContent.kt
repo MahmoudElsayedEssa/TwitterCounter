@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.moe.twitter.domain.TwitterConstants
 import com.moe.twitter.domain.model.TweetMetrics
 import com.moe.twitter.presentation.twitter.components.chars_ghosting.GhostTextArea
 import com.moe.twitter.presentation.twitter.components.PostTweetButton
@@ -78,7 +79,7 @@ fun TwitterContent(
                 StatCard(
                     title = "Characters Typed",
                     value = state.metrics.weightedLength.toString(),
-                    staticSuffix = "/280",
+                    staticSuffix = "/${TwitterConstants.MAX_TWEET_CHARS}",
                     modifier = Modifier.weight(1f)
                 )
                 StatCard(
@@ -137,7 +138,7 @@ private fun TwitterContentEmptyPreview() {
         TwitterContent(
             state = TwitterState(
                 text = "",
-                metrics = TweetMetrics(0, 280, true),
+                metrics = TweetMetrics(0, TwitterConstants.MAX_TWEET_CHARS, true),
                 postingState = PostingState.Idle
             ),
             onAction = {}

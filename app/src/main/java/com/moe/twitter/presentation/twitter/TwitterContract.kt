@@ -2,6 +2,7 @@ package com.moe.twitter.presentation.twitter
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
+import com.moe.twitter.domain.TwitterConstants
 import com.moe.twitter.domain.model.TextIssue
 import com.moe.twitter.domain.model.TweetMetrics
 @Stable
@@ -17,7 +18,7 @@ data class TwitterState(
     val text: String = "",
     val metrics: TweetMetrics = TweetMetrics(
         weightedLength = 0,
-        remaining = 280,
+        remaining = TwitterConstants.MAX_TWEET_CHARS,
         withinLimit = true
     ),
     val errors: List<TextIssue> = emptyList(),
