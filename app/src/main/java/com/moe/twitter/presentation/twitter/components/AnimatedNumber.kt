@@ -51,8 +51,8 @@ import kotlin.math.sin
 
 @Composable
 fun AnimatedNumber(
-    value: String,
     modifier: Modifier = Modifier,
+    value: String,
     style: TextStyle = LocalTextStyle.current.copy(fontSize = 20.sp)
 ) {
     val animationState = remember { NumberAnimationState() }

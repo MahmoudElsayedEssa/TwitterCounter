@@ -47,9 +47,9 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun PostTweetButton(
+    modifier: Modifier = Modifier,
     state: TwitterState,
     onPost: () -> Unit,
-    modifier: Modifier = Modifier
 ) {
     // Validation state
     val isInvalid = state.text.isBlank() || !state.metrics.withinLimit

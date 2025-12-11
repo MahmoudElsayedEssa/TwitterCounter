@@ -50,11 +50,11 @@ import kotlin.random.Random
 
 @Composable
 fun DissolveTextArea(
+    modifier: Modifier = Modifier,
     state: TwitterState,
     onTextChange: (String) -> Unit,
     onTextLayout: (TextLayoutResult) -> Unit,
     ghostEvents: Flow<GhostEvent>,
-    modifier: Modifier = Modifier
 ) {
 
     val twitterColor = MaterialTheme.twitterColors
@@ -66,7 +66,8 @@ fun DissolveTextArea(
                 if (original.text.length > state.maxChars) {
                     addStyle(
                         style = SpanStyle(
-                            background = twitterColor.ErrorBackground, color = twitterColor.TwitterRed
+                            background = twitterColor.ErrorBackground,
+                            color = twitterColor.TwitterRed
                         ), start = state.maxChars, end = original.length
                     )
                 }
@@ -134,9 +135,14 @@ fun DissolveTextArea(
                 ambientColor = shadowColor,
                 spotColor = shadowColor
             )
-            .background(MaterialTheme.twitterColors.Surface, RoundedCornerShape(12.dp)) // then the white card
+            .background(
+                MaterialTheme.twitterColors.Surface,
+                RoundedCornerShape(12.dp)
+            ) // then the white card
             .border(
-                width = 1.dp, color = MaterialTheme.twitterColors.BorderGray, shape = RoundedCornerShape(12.dp)
+                width = 1.dp,
+                color = MaterialTheme.twitterColors.BorderGray,
+                shape = RoundedCornerShape(12.dp)
             )
             .padding(16.dp)
     ) {

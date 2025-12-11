@@ -30,11 +30,11 @@ import com.moe.twitter.ui.theme.twitterColors
 
 @Composable
 fun StatCard(
+    modifier: Modifier = Modifier,
     title: String,
     value: String,
     staticSuffix: String? = null,
     emphasizeNegative: Boolean = false,
-    modifier: Modifier = Modifier
 ) {
     Card(
         modifier = modifier.border(

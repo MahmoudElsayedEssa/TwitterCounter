@@ -20,10 +20,10 @@ import com.moe.twitter.ui.theme.twitterColors
 
 @Composable
 fun TwitterActionButton(
+    modifier: Modifier = Modifier,
     text: String,
     background: Color,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
 ) {
     Button(
         onClick = onClick,

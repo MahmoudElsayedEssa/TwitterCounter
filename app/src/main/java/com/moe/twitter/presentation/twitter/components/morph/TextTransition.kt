@@ -47,8 +47,8 @@ private sealed class CharacterState {
  */
 @Composable
 fun TextTransition(
-    targetText: String,
     modifier: Modifier = Modifier,
+    targetText: String,
     textStyle: TextStyle = MaterialTheme.typography.bodyLarge,
     color: Color = Color.White,
     config: MorphConfig = MorphConfig()

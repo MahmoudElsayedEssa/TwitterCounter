@@ -30,8 +30,8 @@ import kotlin.math.sin
 
 @Composable
 fun TwitterLogo(
+    modifier: Modifier = Modifier,
     postingState: PostingState,
-    modifier: Modifier = Modifier
 ) {
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.twitter))
     val animatable = rememberLottieAnimatable()
