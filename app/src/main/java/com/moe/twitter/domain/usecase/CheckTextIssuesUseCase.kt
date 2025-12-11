@@ -6,7 +6,7 @@ import com.moe.twitter.domain.repository.TextCheckRepository
 class CheckTextIssuesUseCase(
     private val repository: TextCheckRepository
 ) {
-    suspend operator fun invoke(text: String, language: String = "en-US"): List<TextIssue> =
+    suspend operator fun invoke(text: String, language: String = "en-US"): Result<List<TextIssue>> =
         repository.checkTextIssues(text = text, language = language)
 }
 

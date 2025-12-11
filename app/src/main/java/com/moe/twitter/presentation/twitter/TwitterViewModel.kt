@@ -1,97 +1,92 @@
 package com.moe.twitter.presentation.twitter
 
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.text.TextLayoutResult
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.moe.twitter.domain.model.PostTweetResult
+import com.moe.twitter.data.remote.auth.OAuthManager
+import com.moe.twitter.domain.TwitterConstants
+import com.moe.twitter.domain.model.TweetMetrics
+import com.moe.twitter.domain.model.TweetPublishException
 import com.moe.twitter.domain.usecase.CheckTextIssuesUseCase
 import com.moe.twitter.domain.usecase.ComputeTweetMetricsUseCase
 import com.moe.twitter.domain.usecase.PostTweetUseCase
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
+@OptIn(FlowPreview::class)
 class TwitterViewModel(
     private val postTweetUseCase: PostTweetUseCase,
     private val checkTextIssuesUseCase: CheckTextIssuesUseCase,
-    private val computeTweetMetricsUseCase: ComputeTweetMetricsUseCase
+    private val computeTweetMetricsUseCase: ComputeTweetMetricsUseCase,
+    private val oauthManager: OAuthManager
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(TwitterState())
+    companion object {
+        private const val TEXT_VALIDATION_DEBOUNCE_MS = 600L
+        private const val MIN_TEXT_LENGTH_FOR_CHECK = 5
+        private const val POST_SUCCESS_DELAY_MS = 1800L
+        private const val POST_ERROR_DELAY_MS = 2000L
+    }
+
+    private val _state = MutableStateFlow(TwitterState(
+        isAuthenticated = oauthManager.isAuthenticated()
+    ))
     val state = _state.asStateFlow()
 
-    private val _effects = Channel<TwitterEffect>(Channel.BUFFERED)
-    val effects = _effects.receiveAsFlow()
+    private val _effects = MutableSharedFlow<TwitterEffect>()
+    val effects = _effects.asSharedFlow()
 
-    private val _ghostEvents = Channel<GhostEvent>(Channel.BUFFERED)
-    val ghostEvents = _ghostEvents.receiveAsFlow()
+    private val textInput = MutableSharedFlow<String>(extraBufferCapacity = 1)
 
-    private var checkJob: Job? = null
-    private var lastLayout: TextLayoutResult? = null
-    private var previousText: String = ""
+    init {
+        if (!oauthManager.isAuthenticated()) {
+            oauthManager.startAuthFlow()
+        }
+        observeTextValidation()
+    }
 
     fun onAction(action: TwitterAction) {
         when (action) {
             is TwitterAction.OnTextChange -> handleTextChange(action.value)
-            is TwitterAction.OnClear -> handleClear()
-            is TwitterAction.OnCopy -> handleCopy()
-            is TwitterAction.OnPost -> handlePost()
-            is TwitterAction.OnTextLayout -> lastLayout = action.layout
+            TwitterAction.OnClear -> handleClear()
+            TwitterAction.OnCopy -> handleCopy()
+            TwitterAction.OnPost -> handlePost()
+            TwitterAction.OnLogout -> handleClear()
         }
     }
 
-    private fun handleTextChange(newValue: String) {
+    private fun handleTextChange(text: String) {
         viewModelScope.launch {
-
+            val metrics = computeTweetMetricsUseCase(text)
             _state.update {
                 it.copy(
-                    text = newValue,
-                    metrics = computeTweetMetricsUseCase(newValue)
+                    text = text,
+                    metrics = metrics
                 )
             }
-            launchDebouncedCheck(newValue)
-
-            val layout = lastLayout
-            if (layout != null) {
-                handleDeletions(
-                    oldText = previousText,
-                    newText = newValue,
-                    layout = layout
-                )
-            }
-            previousText = newValue
+            textInput.emit(text)
         }
     }
 
     private fun handleClear() {
-        viewModelScope.launch {
-            val layout = lastLayout
-            val text = _state.value.text
-            if (layout != null && text.isNotEmpty()) {
-                spawnClearAllGhosts(
-                    text = text,
-                    layout = layout
-                )
-            }
-
-            _state.update {
-                it.copy(
-                    text = "",
-                    metrics = computeTweetMetricsUseCase(""),
-                    errors = emptyList(),
-                    isChecking = false,
-                    clearSignal = it.clearSignal + 1
-                )
-            }
-            checkJob?.cancel()
-            previousText = ""
+        _state.update {
+            it.copy(
+                text = "",
+                metrics = TweetMetrics(
+                    weightedLength = 0,
+                    remaining = TwitterConstants.MAX_TWEET_CHARS,
+                    withinLimit = true
+                ),
+                errors = emptyList(),
+                isChecking = false
+            )
         }
     }
 
@@ -99,159 +94,73 @@ class TwitterViewModel(
         viewModelScope.launch {
             val text = _state.value.text
             if (text.isEmpty()) {
-                _effects.send(TwitterEffect.ShowToast("Nothing to copy"))
-                return@launch
+                _effects.emit(TwitterEffect.ShowToast("Nothing to copy"))
+            } else {
+                _effects.emit(TwitterEffect.CopyToClipboard(text))
+                _effects.emit(TwitterEffect.ShowToast("Copied"))
             }
-            _effects.send(TwitterEffect.CopyToClipboard(text))
-            _effects.send(TwitterEffect.ShowToast("Copied"))
         }
     }
 
     private fun handlePost() {
         viewModelScope.launch {
-            val current = _state.value.text
+            val text = _state.value.text
+            val metrics = _state.value.metrics
 
-            // Validation
-            if (current.isBlank()) {
-                _effects.send(TwitterEffect.ShowToast("Cannot post empty text"))
-                return@launch
-            }
-            if (!_state.value.metrics.withinLimit) {
-                _effects.send(TwitterEffect.ShowToast("Text exceeds 280 characters"))
-                return@launch
+            when {
+                text.isBlank() -> {
+                    _effects.emit(TwitterEffect.ShowToast("Cannot post empty text"))
+                    return@launch
+                }
+                !metrics.withinLimit -> {
+                    _effects.emit(TwitterEffect.ShowToast("Text exceeds limit"))
+                    return@launch
+                }
             }
 
-            // Set posting state atomically
             _state.update { it.copy(postingState = PostingState.Posting) }
 
-            when (val result = postTweetUseCase(current)) {
-                PostTweetResult.Success -> {
-                    // Update to success state atomically
+            postTweetUseCase(text).fold(
+                onSuccess = {
                     _state.update { it.copy(postingState = PostingState.Success) }
-                    _effects.send(TwitterEffect.ShowToast("Posted!"))
-
-                    // Wait for animation, then reset
-                    delay(1800)
+                    _effects.emit(TwitterEffect.ShowToast("Posted!"))
+                    delay(POST_SUCCESS_DELAY_MS)
                     handleClear()
                     _state.update { it.copy(postingState = PostingState.Idle) }
-                }
-
-                PostTweetResult.NoClientAvailable -> {
-                    _state.update { it.copy(postingState = PostingState.Error("No client available")) }
-                    _effects.send(TwitterEffect.ShowToast("NO CLIENT!"))
-                    delay(1500)
+                },
+                onFailure = { error ->
+                    val message = when {
+                        error is TweetPublishException &&
+                        error.message.equals("No client available", ignoreCase = true) -> "NO CLIENT!"
+                        else -> error.message ?: "Post failed"
+                    }
+                    _state.update { it.copy(postingState = PostingState.Error(message)) }
+                    _effects.emit(TwitterEffect.ShowToast(message))
+                    delay(POST_ERROR_DELAY_MS)
                     _state.update { it.copy(postingState = PostingState.Idle) }
                 }
-
-                is PostTweetResult.Failure -> {
-                    val errorMsg = result.message ?: "Post failed"
-                    // Update to error state atomically
-                    _state.update { it.copy(postingState = PostingState.Error(errorMsg)) }
-                    _effects.send(TwitterEffect.ShowToast(errorMsg))
-
-                    // Reset to idle after error display
-                    delay(2000)
-                    _state.update { it.copy(postingState = PostingState.Idle) }
-                }
-            }
-        }
-    }
-
-    private fun launchDebouncedCheck(text: String) {
-        checkJob?.cancel()
-        if (text.isBlank() || text.length < 5) {
-            _state.update { it.copy(errors = emptyList(), isChecking = false) }
-            return
-        }
-
-        checkJob = viewModelScope.launch {
-            _state.update { it.copy(isChecking = true) }
-            delay(600)
-            if (!isActive) return@launch
-
-            val result = try {
-                checkTextIssuesUseCase(text)
-            } catch (_: Exception) {
-                emptyList()
-            }
-            _state.update { it.copy(errors = result, isChecking = false) }
-        }
-    }
-
-    // ---------------- Ghost seeds (UI animates) ----------------
-
-    private fun handleDeletions(
-        oldText: String,
-        newText: String,
-        layout: TextLayoutResult
-    ) {
-        if (newText.length >= oldText.length) return
-
-        val deletedCount = oldText.length - newText.length
-        val startIndex = newText.length
-
-        for (i in 0 until deletedCount) {
-            val charIndex = startIndex + i
-            if (charIndex >= oldText.length) break
-
-            val ch = oldText[charIndex]
-            val box = layout.getBoundingBox(charIndex)
-
-            spawnBackspaceGhost(
-                char = ch,
-                box = box,
-                stepIndex = i
             )
         }
     }
 
-    private fun spawnBackspaceGhost(
-        char: Char,
-        box: Rect,
-        stepIndex: Int
-    ) {
-        val seed = GhostSeed(
-            id = System.nanoTime(),
-            char = char,
-            baseX = box.left,
-            baseY = box.top,
-            order = stepIndex
-        )
+    private fun observeTextValidation() {
         viewModelScope.launch {
-            _ghostEvents.send(GhostEvent.Backspace(seed, delayMs = stepIndex * 18L))
+            textInput
+                .debounce(TEXT_VALIDATION_DEBOUNCE_MS)
+                .collectLatest { text ->
+                    if (text.length >= MIN_TEXT_LENGTH_FOR_CHECK) {
+                        _state.update { it.copy(isChecking = true) }
+                        val issues = checkTextIssuesUseCase(text).getOrElse { emptyList() }
+                        _state.update { it.copy(errors = issues, isChecking = false) }
+                    } else {
+                        _state.update { it.copy(errors = emptyList(), isChecking = false) }
+                    }
+                }
         }
     }
 
-    private fun spawnClearAllGhosts(
-        text: String,
-        layout: TextLayoutResult
-    ) {
-        val total = text.length
-        if (total == 0) return
-
-        val indices = (0 until total).toList().reversed()
-        val smartDelay = when {
-            total > 30 -> 3L
-            total > 20 -> 5L
-            total > 10 -> 8L
-            else -> 12L
-        }
-
-        val seeds = indices.mapIndexed { order, charIndex ->
-            val ch = text[charIndex]
-            val box = layout.getBoundingBox(charIndex)
-            GhostSeed(
-                id = System.nanoTime(),
-                char = ch,
-                baseX = box.left,
-                baseY = box.top,
-                order = order
-            )
-        }
-
-        viewModelScope.launch {
-            _ghostEvents.send(GhostEvent.Clear(seeds = seeds, smartDelayMs = smartDelay))
-        }
+    fun refreshAuthState() {
+        _state.update { it.copy(isAuthenticated = oauthManager.isAuthenticated()) }
     }
 }
 

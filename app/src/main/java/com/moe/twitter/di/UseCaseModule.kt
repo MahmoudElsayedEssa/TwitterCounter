@@ -3,12 +3,11 @@ package com.moe.twitter.di
 import com.moe.twitter.domain.usecase.CheckTextIssuesUseCase
 import com.moe.twitter.domain.usecase.ComputeTweetMetricsUseCase
 import com.moe.twitter.domain.usecase.PostTweetUseCase
+import com.moe.twitter.domain.TwitterConstants
 import org.koin.dsl.module
 
-private const val MAX_TWITTER_CHARACTERS = 280
-
 val useCaseModule = module {
-    factory { ComputeTweetMetricsUseCase(get(), maxCharacters = MAX_TWITTER_CHARACTERS) }
+    factory { ComputeTweetMetricsUseCase(get(), maxCharacters = TwitterConstants.MAX_TWEET_CHARS) }
     factory { PostTweetUseCase(get()) }
     factory { CheckTextIssuesUseCase(get()) }
 }

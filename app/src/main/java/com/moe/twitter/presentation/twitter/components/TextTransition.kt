@@ -1,4 +1,4 @@
-package com.moe.twitter.presentation.twitter.components.morph
+package com.moe.twitter.presentation.twitter.components
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
@@ -9,6 +9,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,6 +18,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
+import kotlinx.coroutines.delay
 import kotlin.math.pow
 
 /**
@@ -53,8 +55,8 @@ fun TextTransition(
     color: Color = Color.White,
     config: MorphConfig = MorphConfig()
 ) {
-    val previousText = remember { androidx.compose.runtime.mutableStateOf(targetText) }
-    val isAnimating = remember { androidx.compose.runtime.mutableStateOf(false) }
+    val previousText = remember { mutableStateOf(targetText) }
+    val isAnimating = remember { mutableStateOf(false) }
 
     // Compute character states using smart diffing
     val characterStates = remember(targetText) {
@@ -68,7 +70,7 @@ fun TextTransition(
     LaunchedEffect(targetText) {
         if (previousText.value != targetText) {
             isAnimating.value = true
-            kotlinx.coroutines.delay((config.duration + config.staggerDelay * characterStates.size).toLong())
+            delay((config.duration + config.staggerDelay * characterStates.size).toLong())
             isAnimating.value = false
             previousText.value = targetText
         }
@@ -265,7 +267,7 @@ private fun AppearingCharacter(
     LaunchedEffect(isAnimating) {
         if (isAnimating) {
             progress.snapTo(0f)
-            kotlinx.coroutines.delay(delay.toLong())
+            delay(delay.toLong())
             progress.animateTo(1f, animationSpec = tween(config.duration))
         }
     }
@@ -303,7 +305,7 @@ private fun DisappearingCharacter(
     LaunchedEffect(isAnimating) {
         if (isAnimating) {
             progress.snapTo(0f)
-            kotlinx.coroutines.delay(delay.toLong())
+            delay(delay.toLong())
             progress.animateTo(1f, animationSpec = tween(config.duration))
         }
     }
@@ -344,7 +346,7 @@ private fun MorphingCharacter(
     LaunchedEffect(isAnimating) {
         if (isAnimating) {
             progress.snapTo(0f)
-            kotlinx.coroutines.delay(delay.toLong())
+            delay(delay.toLong())
             progress.animateTo(1f, animationSpec = tween(config.duration))
         }
     }

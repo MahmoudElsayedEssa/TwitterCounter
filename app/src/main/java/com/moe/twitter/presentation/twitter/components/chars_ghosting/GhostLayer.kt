@@ -1,8 +1,8 @@
-package com.moe.twitter.presentation.twitter.components
+package com.moe.twitter.presentation.twitter.components.chars_ghosting
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -10,30 +10,33 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.sp
-import com.moe.twitter.presentation.twitter.GhostCharUi
 import com.moe.twitter.ui.theme.TwitterCounterTheme
+import com.moe.twitter.ui.theme.twitterColors
 
 @Composable
-fun GhostLayer(ghosts: List<GhostCharUi>) {
-    val density = LocalDensity.current
+fun GhostLayer(
+    ghosts: List<GhostCharUi>
+) {
     ghosts.forEach { ghost ->
-        val xDp = with(density) { (ghost.baseX + ghost.offsetX).toDp() }
-        val yDp = with(density) { (ghost.baseY + ghost.offsetY).toDp() }
+        if (ghost.alpha <= 0f) return@forEach
 
         Text(
             text = ghost.char.toString(),
-            modifier = Modifier
-                .offset(x = xDp, y = yDp)
-                .graphicsLayer(
-                    alpha = ghost.alpha,
-                    scaleX = ghost.scale,
-                    scaleY = ghost.scale,
-                    rotationZ = ghost.rotation
-                ),
-            fontSize = 16.sp,
-            lineHeight = 24.sp
+            modifier = Modifier.graphicsLayer(
+                translationX = ghost.baseX + ghost.offsetX,
+                translationY = ghost.baseY + ghost.offsetY,
+                scaleX = ghost.scale,
+                scaleY = ghost.scale,
+                rotationZ = ghost.rotation,
+                alpha = ghost.alpha
+            ),
+            style = TextStyle(
+                fontSize = 16.sp,
+                color = MaterialTheme.twitterColors.TextDark,
+                lineHeight = 24.sp
+            )
         )
     }
 }

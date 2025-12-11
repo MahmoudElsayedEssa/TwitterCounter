@@ -39,8 +39,6 @@ import androidx.compose.ui.unit.sp
 import com.moe.twitter.domain.model.TweetMetrics
 import com.moe.twitter.presentation.twitter.PostingState
 import com.moe.twitter.presentation.twitter.TwitterState
-import com.moe.twitter.presentation.twitter.components.morph.MorphConfig
-import com.moe.twitter.presentation.twitter.components.morph.TextTransition
 import com.moe.twitter.ui.theme.TwitterCounterTheme
 import com.moe.twitter.ui.theme.twitterColors
 import kotlinx.coroutines.delay
@@ -204,7 +202,7 @@ fun PostTweetButton(
 private fun PostTweetButtonIdlePreview() {
     TwitterCounterTheme {
         Surface {
-            PostTweetButton(
+    PostTweetButton(
                 state = TwitterState(
                     text = "Hello Twitter!",
                     metrics = TweetMetrics(14, 266, true),

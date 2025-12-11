@@ -1,6 +1,6 @@
 package com.moe.twitter.data.remote.api
 
-import com.moe.twitter.data.remote.model.languagetool.LanguageToolResponse
+import com.moe.twitter.data.remote.model.LanguageToolResponse
 import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded
 import retrofit2.http.POST
