@@ -18,6 +18,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.lang.StrictMath.PI
 import kotlin.math.cos
+import kotlin.math.min
 import kotlin.math.sin
 import kotlin.random.Random
 
@@ -28,8 +29,15 @@ class GhostController(
     private val scope: CoroutineScope
 ) {
 
+    companion object{
+        private const val MAX_EXPLOSION_GHOSTS = 80
+        private const val MAX_BACKSPACE_GHOSTS_PER_EVENT = 12
+        private const val BACKSPACE_STAGGER_DELAY = 18L
+
+    }
     val ghostsUi: List<GhostCharUi>
         get() = ghosts.map { it.toUi() }
+
 
     fun onLayout(newLayout: TextLayoutResult) {
         previousLayoutState.value = currentLayoutState.value
@@ -69,11 +77,28 @@ class GhostController(
         if (layout.layoutInput.text.length != oldText.length) return
 
         val deletedCount = oldText.length - newText.length
+        if (deletedCount <= 0) return
+
         val startIndex = newText.length
 
-        for (i in 0 until deletedCount) {
-            val charIndex = startIndex + i
-            if (charIndex >= oldText.length || charIndex >= layout.layoutInput.text.length) break
+        // Limit how many ghosts we spawn for a single delete burst
+        val actualDeleted = min(deletedCount, MAX_BACKSPACE_GHOSTS_PER_EVENT)
+
+        // If we deleted a lot, sample positions across the deleted range
+        val indicesToUse: List<Int> = if (deletedCount <= MAX_BACKSPACE_GHOSTS_PER_EVENT) {
+            // simple case: just use first N
+            (0 until actualDeleted).toList()
+        } else {
+            // sample evenly across the deleted range
+            val step = (deletedCount.toFloat() / actualDeleted).coerceAtLeast(1f)
+            List(actualDeleted) { i ->
+                (i * step).toInt().coerceIn(0, deletedCount - 1)
+            }.distinct().take(actualDeleted)
+        }
+
+        indicesToUse.forEachIndexed { order, localIndex ->
+            val charIndex = startIndex + localIndex
+            if (charIndex >= oldText.length || charIndex >= layout.layoutInput.text.length) return@forEachIndexed
 
             val char = oldText[charIndex]
             val box = layout.getBoundingBox(charIndex)
@@ -82,11 +107,11 @@ class GhostController(
                 char = char,
                 baseX = box.left,
                 baseY = box.top,
-                order = i
+                order = order
             )
 
             scope.launch {
-                delay(i * 18L)
+                delay(order * BACKSPACE_STAGGER_DELAY)
                 val render = GhostRender.fromSeed(seed)
                 ghosts.add(render)
                 animateBackspaceGhost(render, ghosts)
@@ -101,15 +126,32 @@ class GhostController(
         if (layout.layoutInput.text.length != text.length) return
 
         val total = text.length
-        val smartDelay = when {
-            total > 30 -> 3L
-            total > 20 -> 5L
-            total > 10 -> 8L
-            else -> 12L
+        if (total <= 0) return
+
+        // Base stagger delay depending on text length
+        val baseDelay = when {
+            total > 200 -> 2L
+            total > 120 -> 3L
+            total > 60  -> 5L
+            total > 30  -> 8L
+            total > 20  -> 10L
+            total > 10  -> 12L
+            else        -> 16L
         }
 
-        val indices = (0 until total).toList().reversed()
-        indices.forEachIndexed { order, charIndex ->
+        val allIndices = (0 until total).toList()
+
+        // Limit number of explosion ghosts
+        val selectedIndices: List<Int> = if (total > MAX_EXPLOSION_GHOSTS) {
+            // take random subset then sort descending so visually it still feels "full"
+            allIndices.shuffled()
+                .take(MAX_EXPLOSION_GHOSTS)
+                .sortedDescending()
+        } else {
+            allIndices.reversed()
+        }
+
+        selectedIndices.forEachIndexed { order, charIndex ->
             if (charIndex >= text.length || charIndex >= layout.layoutInput.text.length) return@forEachIndexed
 
             try {
@@ -124,7 +166,7 @@ class GhostController(
                 )
 
                 scope.launch {
-                    delay(order * smartDelay)
+                    delay(order * baseDelay)
                     val render = GhostRender.fromSeed(seed)
                     ghosts.add(render)
                     animateExplosionGhost(render, ghosts)
