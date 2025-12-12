@@ -3,6 +3,7 @@ package com.moe.twitter.data.remote.auth
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.core.net.toUri
 import com.moe.twitter.BuildConfig
 
 /**
@@ -33,14 +34,12 @@ class OAuthManager(
 
         // Build authorization URL
         val authUrl = buildAuthorizationUrl(
-            clientId = BuildConfig.TWITTER_CLIENT_ID,
-            redirectUri = BuildConfig.TWITTER_REDIRECT_URI,
             codeChallenge = codeChallenge,
             state = state
         )
 
         // Launch browser with authorization URL
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(authUrl)).apply {
+        val intent = Intent(Intent.ACTION_VIEW, authUrl.toUri()).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }
         context.startActivity(intent)
@@ -52,8 +51,6 @@ class OAuthManager(
      * Builds the Twitter OAuth 2.0 authorization URL with PKCE.
      */
     private fun buildAuthorizationUrl(
-        clientId: String,
-        redirectUri: String,
         codeChallenge: String,
         state: String
     ): String {
@@ -64,8 +61,8 @@ class OAuthManager(
             .appendPath("oauth2")
             .appendPath("authorize")
             .appendQueryParameter("response_type", "code")
-            .appendQueryParameter("client_id", clientId)
-            .appendQueryParameter("redirect_uri", redirectUri)
+            .appendQueryParameter("client_id", BuildConfig.TWITTER_CLIENT_ID)
+            .appendQueryParameter("redirect_uri", BuildConfig.TWITTER_REDIRECT_URI)
             .appendQueryParameter("scope", "tweet.read tweet.write users.read offline.access")
             .appendQueryParameter("state", state)
             .appendQueryParameter("code_challenge", codeChallenge)
