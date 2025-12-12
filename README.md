@@ -12,8 +12,8 @@ Jetpack Compose sample that mirrors Twitter's character counting rules and posts
 
 
 ## Demo video
-https://github.com/user-attachments/assets/bd161f8f-8e07-460a-bf6a-4363e5f15de2
-- Note: The included video shows the flow without posting to X because free developer accounts hit rate limits for tweet creation and the black screen is X OAuth Screen. The app will still exercise UI, validation, and error handling paths.
+https://github.com/user-attachments/assets/6537c7c1-6841-409b-be51-6b6aefb653ab
+
 
 ## Project structure
 - `app/src/main/java/com/moe/twitter/presentation/twitter`: Compose UI and `TwitterViewModel`.
