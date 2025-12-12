@@ -23,7 +23,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,14 +42,25 @@ import com.moe.twitter.ui.theme.TwitterCounterTheme
 import com.moe.twitter.ui.theme.twitterColors
 import kotlinx.coroutines.delay
 
+private enum class InvalidReason {
+    BLANK,
+    TOO_LONG
+}
+
 @Composable
 fun PostTweetButton(
     modifier: Modifier = Modifier,
     state: TwitterState,
     onPost: () -> Unit,
 ) {
-    // Validation state
-    val isInvalid = state.text.isBlank() || !state.metrics.withinLimit
+
+    // Compute invalidReason directly - no need for remember/derivedStateOf since it's a simple computation
+    val invalidReason = when {
+        state.text.isBlank() -> InvalidReason.BLANK
+        !state.metrics.withinLimit -> InvalidReason.TOO_LONG
+        else -> null
+    }
+    val isInvalid = invalidReason != null
 
     // Local UI state for showing invalid feedback
     var showInvalidFeedback by remember { mutableStateOf(false) }
@@ -64,32 +74,28 @@ fun PostTweetButton(
     }
 
     // Derive button appearance from robust state (single source of truth)
-    // Using derivedStateOf to optimize recomposition
-    val buttonText by remember {
-        derivedStateOf {
-            when {
-                showInvalidFeedback -> if (state.text.isBlank()) "Enter some text" else "Text too long"
-                else -> when (state.postingState) {
-                    PostingState.Idle -> "Post tweet"
-                    PostingState.Posting -> "Posting..."
-                    PostingState.Success -> "Posted!"
-                    is PostingState.Error -> "Failed"
-                }
-            }
+    val buttonText = when {
+        showInvalidFeedback -> when (invalidReason) {
+            InvalidReason.BLANK -> "Enter some text"
+            InvalidReason.TOO_LONG -> "Text too long"
+            null -> "Post tweet" // fallback
+        }
+
+        else -> when (state.postingState) {
+            PostingState.Idle -> "Post tweet"
+            PostingState.Posting -> "Posting..."
+            PostingState.Success -> "Posted!"
+            is PostingState.Error -> "Failed"
         }
     }
     val twitterColor = MaterialTheme.twitterColors
-    val buttonColor by remember {
-        derivedStateOf {
-            when {
-                showInvalidFeedback -> twitterColor.ErrorRed
-                else -> when (state.postingState) {
-                    PostingState.Idle -> twitterColor.TwitterBlue
-                    PostingState.Posting -> twitterColor.TwitterBlue
-                    PostingState.Success -> twitterColor.BrightGreen
-                    is PostingState.Error -> twitterColor.ErrorRed
-                }
-            }
+    val buttonColor = when {
+        showInvalidFeedback -> twitterColor.ErrorRed
+        else -> when (state.postingState) {
+            PostingState.Idle -> twitterColor.TwitterBlue
+            PostingState.Posting -> twitterColor.TwitterBlue
+            PostingState.Success -> twitterColor.BrightGreen
+            is PostingState.Error -> twitterColor.ErrorRed
         }
     }
 
@@ -99,9 +105,7 @@ fun PostTweetButton(
         else -> null
     }
 
-    val showSpinner by remember {
-        derivedStateOf { state.postingState == PostingState.Posting }
-    }
+    val showSpinner = state.postingState == PostingState.Posting
 
     // Smooth animated scale based on state
     val scale by animateFloatAsState(
@@ -202,7 +206,7 @@ fun PostTweetButton(
 private fun PostTweetButtonIdlePreview() {
     TwitterCounterTheme {
         Surface {
-    PostTweetButton(
+            PostTweetButton(
                 state = TwitterState(
                     text = "Hello Twitter!",
                     metrics = TweetMetrics(14, 266, true),

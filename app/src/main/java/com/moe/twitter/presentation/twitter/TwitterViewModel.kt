@@ -113,7 +113,8 @@ class TwitterViewModel(
                     return@launch
                 }
                 !metrics.withinLimit -> {
-                    _effects.emit(TwitterEffect.ShowToast("Text exceeds limit"))
+                    _state.update { it.copy(postingState = PostingState.Error("Too long ")) }
+                    _effects.emit(TwitterEffect.ShowToast("Too long "))
                     return@launch
                 }
             }
