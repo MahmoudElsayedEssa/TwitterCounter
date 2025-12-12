@@ -12,8 +12,8 @@ Jetpack Compose sample that mirrors Twitter's character counting rules and posts
 
 
 ## Demo video
-- (Placeholder) Add your demo link here once uploaded.
-- Note: The included video will show the flow without posting to X because free developer accounts hit rate limits for tweet creation. The app will still exercise UI, validation, and error handling paths.
+https://github.com/user-attachments/assets/bd161f8f-8e07-460a-bf6a-4363e5f15de2
+- Note: The included video shows the flow without posting to X because free developer accounts hit rate limits for tweet creation and the black screen is X OAuth Screen. The app will still exercise UI, validation, and error handling paths.
 
 ## Project structure
 - `app/src/main/java/com/moe/twitter/presentation/twitter`: Compose UI and `TwitterViewModel`.
@@ -51,6 +51,4 @@ TWITTER_BEARER_TOKEN=your_bearer_token
 - The tweet composer UI lives in a dedicated package and can be embedded elsewhere.
 - Provide valid Twitter credentials to exercise the posting flow; otherwise, use tests to verify logic without hitting the network.
 
-## Submission
-Push the repo to GitHub and share the link per the challenge instructions.
 
