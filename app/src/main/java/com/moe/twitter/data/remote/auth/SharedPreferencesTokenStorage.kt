@@ -2,6 +2,7 @@ package com.moe.twitter.data.remote.auth
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 
@@ -27,9 +28,9 @@ class SharedPreferencesTokenStorage(context: Context) : TokenStorage {
     }
 
     override fun saveAccessToken(token: String) {
-        sharedPreferences.edit()
-            .putString(KEY_ACCESS_TOKEN, token)
-            .apply()
+        sharedPreferences.edit {
+            putString(KEY_ACCESS_TOKEN, token)
+        }
     }
 
     override fun getAccessToken(): String? {
@@ -37,9 +38,9 @@ class SharedPreferencesTokenStorage(context: Context) : TokenStorage {
     }
 
     override fun saveRefreshToken(token: String) {
-        sharedPreferences.edit()
-            .putString(KEY_REFRESH_TOKEN, token)
-            .apply()
+        sharedPreferences.edit {
+            putString(KEY_REFRESH_TOKEN, token)
+        }
     }
 
     override fun getRefreshToken(): String? {
@@ -47,9 +48,9 @@ class SharedPreferencesTokenStorage(context: Context) : TokenStorage {
     }
 
     override fun saveCodeVerifier(codeVerifier: String) {
-        sharedPreferences.edit()
-            .putString(KEY_CODE_VERIFIER, codeVerifier)
-            .apply()
+        sharedPreferences.edit {
+            putString(KEY_CODE_VERIFIER, codeVerifier)
+        }
     }
 
     override fun getCodeVerifier(): String? {
@@ -57,9 +58,9 @@ class SharedPreferencesTokenStorage(context: Context) : TokenStorage {
     }
 
     override fun saveState(state: String) {
-        sharedPreferences.edit()
-            .putString(KEY_STATE, state)
-            .apply()
+        sharedPreferences.edit {
+            putString(KEY_STATE, state)
+        }
     }
 
     override fun getState(): String? {
@@ -67,19 +68,19 @@ class SharedPreferencesTokenStorage(context: Context) : TokenStorage {
     }
 
     override fun clearEphemeralAuth() {
-        sharedPreferences.edit()
-            .remove(KEY_CODE_VERIFIER)
-            .remove(KEY_STATE)
-            .apply()
+        sharedPreferences.edit {
+            remove(KEY_CODE_VERIFIER)
+                .remove(KEY_STATE)
+        }
     }
 
     override fun clearTokens() {
-        sharedPreferences.edit()
-            .remove(KEY_ACCESS_TOKEN)
-            .remove(KEY_REFRESH_TOKEN)
-            .remove(KEY_CODE_VERIFIER)
-            .remove(KEY_STATE)
-            .apply()
+        sharedPreferences.edit {
+            remove(KEY_ACCESS_TOKEN)
+                .remove(KEY_REFRESH_TOKEN)
+                .remove(KEY_CODE_VERIFIER)
+                .remove(KEY_STATE)
+        }
     }
 
     companion object {
